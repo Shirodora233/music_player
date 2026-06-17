@@ -9,7 +9,9 @@ module song_rom (
     output reg  [7:0] default_bpm,
     output reg  [2:0] key_tonic,
     output reg  [1:0] key_accidental,
-    output reg        key_mode
+    output reg        key_mode,
+    output reg  [2:0] beats_per_bar,
+    output reg  [1:0] first_beat_in_bar
 );
 
     localparam [2:0] N_C = 3'd0;
@@ -54,11 +56,15 @@ module song_rom (
         key_tonic           = N_C;
         key_accidental      = ACC_NATURAL;
         key_mode            = MODE_MAJOR;
+        beats_per_bar       = 3'd4;
+        first_beat_in_bar   = 2'd0;
 
         if (song_select == 1'b0) begin
             // Song 0: Twinkle Twinkle Little Star, 4/4 time.
             song_length         = 8'd42;
             total_duration_16th = 16'd192;
+            beats_per_bar       = 3'd4;
+            first_beat_in_bar   = 2'd0;
             case (note_index)
                 8'd0,  8'd1:  note_word = note(N_C, ACC_NATURAL, 4'd4, DUR_QUARTER);
                 8'd2,  8'd3:  note_word = note(N_G, ACC_NATURAL, 4'd4, DUR_QUARTER);
@@ -90,6 +96,8 @@ module song_rom (
             // Song 1: Two Tigers, 4/4 time.
             song_length         = 8'd32;
             total_duration_16th = 16'd144;
+            beats_per_bar       = 3'd4;
+            first_beat_in_bar   = 2'd0;
             case (note_index)
                 8'd0,  8'd4:  note_word = note(N_C, ACC_NATURAL, 4'd4, DUR_QUARTER);
                 8'd1,  8'd5:  note_word = note(N_D, ACC_NATURAL, 4'd4, DUR_QUARTER);

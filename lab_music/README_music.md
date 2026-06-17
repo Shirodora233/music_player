@@ -44,7 +44,7 @@ the board photo. `led_panel_controller` drives the musical display and
 | --- | --- |
 | Row 0 | Current note name: C, D, E, F, G, A, B on the first seven LEDs |
 | Row 1 | Octave: octave 0 is all off, octaves 1 through 8 light one LED |
-| Row 2 | Flat flag, sharp flag, and beat flash on the final LED |
+| Row 2 | Flat flag, sharp flag, and right-aligned beat-in-bar indicator |
 | Row 3 | Playback progress bar based on elapsed sixteenth-note units |
 
 The seven-segment display is formatted by `sevenseg_ui_formatter` and scanned by
@@ -90,10 +90,10 @@ for five seconds, the UI returns to the song display mode.
 | `[5:0]` | `duration_16th` | duration in sixteenth-note units |
 
 The ROM also emits per-song metadata: note count, total duration in
-sixteenth-note units, default BPM, tonic, accidental, and mode. The current
-playback path sends this richer note word through `pitch_processor`, which
-computes both the sounding semitone pitch and the display spelling. The
-transpose parameter is controlled by `ui_controller`.
+sixteenth-note units, default BPM, tonic, accidental, mode, beats per bar, and
+the first beat offset. The current playback path sends this richer note word
+through `pitch_processor`, which computes both the sounding semitone pitch and
+the display spelling. The transpose parameter is controlled by `ui_controller`.
 
 Playback timing uses each song's default BPM and the note `duration_16th` field.
 `beat_controller` emits one pulse per sixteenth note, one pulse per quarter-note

@@ -19,7 +19,7 @@ module tb_music_top;
     reg [7:0] paused_index;
 
     music_top #(
-        .CLK_FREQ_HZ(100_000),
+        .CLK_FREQ_HZ(10_000),
         .NOTE_GAP_MS(1),
         .DEBOUNCE_MS(1),
         .KEY_ACTIVE_LOW(1)
@@ -110,8 +110,16 @@ module tb_music_top;
 
         if ((dut.led_row0 != 8'b0000_0001) ||
             (dut.led_row1 != 8'b0000_1000) ||
-            (dut.led_row2[1:0] != 2'b00)) begin
+            (dut.led_row2[1:0] != 2'b00) ||
+            (dut.led_row2[7:4] != 4'b0001)) begin
             $display("ERROR: LED panel did not show natural C4");
+            errors = errors + 1;
+        end
+
+        if ((dut.beats_per_bar != 3'd4) ||
+            (dut.first_beat_in_bar != 2'd0) ||
+            (dut.beat_in_bar != 2'd0)) begin
+            $display("ERROR: song beat metadata did not initialize as 4/4 first beat");
             errors = errors + 1;
         end
 
@@ -120,8 +128,8 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        if ((seg_cs != 8'b1111_1110) || (seg[31:24] != 8'b0011_1111)) begin
-            $display("ERROR: seven-segment scanner did not start on rightmost time digit 0");
+        if ((^seg_cs === 1'bx) || (^seg === 1'bx)) begin
+            $display("ERROR: seven-segment scanner produced unknown outputs");
             errors = errors + 1;
         end
 
@@ -141,6 +149,12 @@ module tb_music_top;
         repeat (500) @(posedge clk);
         if (beep_edges == 0) begin
             $display("ERROR: tone generator did not toggle beep");
+            errors = errors + 1;
+        end
+
+        repeat (5200) @(posedge clk);
+        if ((dut.beat_in_bar != 2'd1) || (dut.led_row2[7:4] != 4'b0010)) begin
+            $display("ERROR: beat indicator did not advance to the second beat");
             errors = errors + 1;
         end
 

@@ -48,6 +48,10 @@ module music_top #(
     wire [2:0] key_tonic;
     wire [1:0] key_accidental;
     wire key_mode;
+    wire [2:0] beats_per_bar;
+    wire [1:0] first_beat_in_bar;
+    wire [2:0] safe_beats_per_bar;
+    wire [1:0] safe_first_beat_in_bar;
     wire note_done;
     wire sixteenth_pulse;
     wire beat_pulse;
@@ -70,10 +74,17 @@ module music_top #(
     reg [15:0] elapsed_16th_units;
     reg [15:0] elapsed_seconds;
     reg [31:0] second_tick_count;
+    reg [1:0] beat_in_bar;
 
     localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
 
     assign selected_song_index = {7'd0, selected_song};
+    assign safe_beats_per_bar =
+        ((beats_per_bar >= 3'd2) && (beats_per_bar <= 3'd4)) ?
+        beats_per_bar : 3'd4;
+    assign safe_first_beat_in_bar =
+        ({1'b0, first_beat_in_bar} < safe_beats_per_bar) ?
+        first_beat_in_bar : 2'd0;
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
@@ -177,7 +188,9 @@ module music_top #(
         .default_bpm(default_bpm),
         .key_tonic(key_tonic),
         .key_accidental(key_accidental),
-        .key_mode(key_mode)
+        .key_mode(key_mode),
+        .beats_per_bar(beats_per_bar),
+        .first_beat_in_bar(first_beat_in_bar)
     );
 
     assign duration_16th = note_word[5:0];
@@ -216,13 +229,22 @@ module music_top #(
             elapsed_16th_units <= 16'd0;
             elapsed_seconds    <= 16'd0;
             second_tick_count  <= 32'd0;
+            beat_in_bar        <= 2'd0;
         end else if (playback_timing_clear) begin
             elapsed_16th_units <= 16'd0;
             elapsed_seconds    <= 16'd0;
             second_tick_count  <= 32'd0;
+            beat_in_bar        <= safe_first_beat_in_bar;
         end else if (playing) begin
             if (sixteenth_pulse && (elapsed_16th_units < total_duration_16th))
                 elapsed_16th_units <= elapsed_16th_units + 1'b1;
+
+            if (beat_pulse) begin
+                if ({1'b0, beat_in_bar} >= (safe_beats_per_bar - 1'b1))
+                    beat_in_bar <= 2'd0;
+                else
+                    beat_in_bar <= beat_in_bar + 1'b1;
+            end
 
             if ((SECOND_TICKS <= 1) || (second_tick_count >= SECOND_TICKS - 1)) begin
                 second_tick_count <= 32'd0;
@@ -254,7 +276,8 @@ module music_top #(
         .display_note_name(display_note_name),
         .display_accidental(display_accidental),
         .display_octave(display_octave),
-        .beat_pulse(beat_pulse),
+        .beats_per_bar(safe_beats_per_bar),
+        .beat_in_bar(beat_in_bar),
         .elapsed_16th_units(elapsed_16th_units),
         .total_duration_16th(total_duration_16th),
         .row0(led_row0),
