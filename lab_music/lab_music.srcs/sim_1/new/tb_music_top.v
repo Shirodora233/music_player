@@ -144,7 +144,7 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        if (dut.volume_level != 3'd4) begin
+        if (dut.volume_level != 3'd7) begin
             $display("ERROR: reset volume is not maximum");
             errors = errors + 1;
         end
@@ -215,6 +215,32 @@ module tb_music_top;
         repeat (10) @(posedge clk);
         if (dut.current_bpm != 8'd120) begin
             $display("ERROR: BPM decrement did not return to 120");
+            errors = errors + 1;
+        end
+
+        press_next;
+        if (dut.edit_mode != 2'd3) begin
+            $display("ERROR: next key did not select volume edit mode");
+            errors = errors + 1;
+        end
+
+        if (dut.sevenseg_glyphs[39:20] != {5'd16, 5'd0, 5'd0, 5'd7}) begin
+            $display("ERROR: seven-segment formatter did not show U007");
+            errors = errors + 1;
+        end
+
+        press_volume_down;
+        repeat (10) @(posedge clk);
+        if ((dut.volume_level != 3'd6) ||
+            (dut.sevenseg_glyphs[39:20] != {5'd16, 5'd0, 5'd0, 5'd6})) begin
+            $display("ERROR: volume decrement did not show U006");
+            errors = errors + 1;
+        end
+
+        press_volume_up;
+        repeat (10) @(posedge clk);
+        if (dut.volume_level != 3'd7) begin
+            $display("ERROR: volume increment did not return to maximum");
             errors = errors + 1;
         end
 

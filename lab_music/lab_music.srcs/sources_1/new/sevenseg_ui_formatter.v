@@ -9,6 +9,7 @@ module sevenseg_ui_formatter #(
     input  wire [7:0]        selected_song,
     input  wire signed [5:0] transpose_semitones,
     input  wire [7:0]        bpm,
+    input  wire [2:0]        volume_level,
     input  wire [15:0]       elapsed_seconds,
     input  wire              paused,
     output reg  [39:0]       glyphs,
@@ -19,6 +20,7 @@ module sevenseg_ui_formatter #(
     localparam [1:0] EDIT_SONG      = 2'd0;
     localparam [1:0] EDIT_TRANSPOSE = 2'd1;
     localparam [1:0] EDIT_BPM       = 2'd2;
+    localparam [1:0] EDIT_VOLUME    = 2'd3;
 
     localparam [4:0] GLYPH_0     = 5'd0;
     localparam [4:0] GLYPH_1     = 5'd1;
@@ -36,6 +38,7 @@ module sevenseg_ui_formatter #(
     localparam [4:0] GLYPH_T     = 5'd13;
     localparam [4:0] GLYPH_B     = 5'd14;
     localparam [4:0] GLYPH_PLUS  = 5'd15;
+    localparam [4:0] GLYPH_U     = 5'd16;
 
     localparam integer BLINK_TICKS_RAW = CLK_FREQ_HZ / 2;
     localparam integer BLINK_TICKS     = (BLINK_TICKS_RAW < 1) ? 1 : BLINK_TICKS_RAW;
@@ -123,6 +126,12 @@ module sevenseg_ui_formatter #(
                 glyph_d6 = digit_to_glyph(bpm / 8'd100);
                 glyph_d5 = digit_to_glyph((bpm / 8'd10) % 8'd10);
                 glyph_d4 = digit_to_glyph(bpm % 8'd10);
+            end
+            EDIT_VOLUME: begin
+                glyph_d7 = GLYPH_U;
+                glyph_d6 = GLYPH_0;
+                glyph_d5 = GLYPH_0;
+                glyph_d4 = digit_to_glyph({1'b0, volume_level});
             end
             EDIT_SONG: begin
                 glyph_d7 = GLYPH_S;

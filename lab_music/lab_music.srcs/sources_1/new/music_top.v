@@ -73,7 +73,6 @@ module music_top #(
 
     localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
 
-    assign volume_level = 3'd4;
     assign selected_song_index = {7'd0, selected_song};
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
@@ -150,6 +149,7 @@ module music_top #(
         .selected_song(selected_song),
         .transpose_semitones(transpose_semitones),
         .current_bpm(current_bpm),
+        .volume_level(volume_level),
         .edit_mode(edit_mode),
         .song_changed(song_changed)
     );
@@ -280,6 +280,7 @@ module music_top #(
         .selected_song(selected_song_index),
         .transpose_semitones(transpose_semitones),
         .bpm(current_bpm),
+        .volume_level(volume_level),
         .elapsed_seconds(elapsed_seconds),
         .paused(paused),
         .glyphs(sevenseg_glyphs),
@@ -298,30 +299,5 @@ module music_top #(
         .seg(seg),
         .seg_cs(seg_cs)
     );
-
-endmodule
-
-module volume_controller (
-    input  wire       clk,
-    input  wire       rst_n,
-    input  wire       volume_down_pressed,
-    input  wire       volume_up_pressed,
-    output reg  [2:0] volume_level
-);
-
-    localparam [2:0] VOLUME_MIN = 3'd0;
-    localparam [2:0] VOLUME_MAX = 3'd4;
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            volume_level <= VOLUME_MAX;
-        end else if (volume_down_pressed && !volume_up_pressed) begin
-            if (volume_level > VOLUME_MIN)
-                volume_level <= volume_level - 1'b1;
-        end else if (volume_up_pressed && !volume_down_pressed) begin
-            if (volume_level < VOLUME_MAX)
-                volume_level <= volume_level + 1'b1;
-        end
-    end
 
 endmodule

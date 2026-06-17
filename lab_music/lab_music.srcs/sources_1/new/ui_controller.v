@@ -13,6 +13,7 @@ module ui_controller #(
     output reg  [0:0]        selected_song,
     output reg signed [5:0]  transpose_semitones,
     output reg  [7:0]        current_bpm,
+    output reg  [2:0]        volume_level,
     output reg  [1:0]        edit_mode,
     output reg               song_changed
 );
@@ -20,11 +21,14 @@ module ui_controller #(
     localparam [1:0] EDIT_SONG      = 2'd0;
     localparam [1:0] EDIT_TRANSPOSE = 2'd1;
     localparam [1:0] EDIT_BPM       = 2'd2;
+    localparam [1:0] EDIT_VOLUME    = 2'd3;
 
     localparam signed [5:0] TRANSPOSE_MIN = -6'sd12;
     localparam signed [5:0] TRANSPOSE_MAX =  6'sd12;
     localparam [7:0] BPM_MIN = 8'd30;
     localparam [7:0] BPM_MAX = 8'd250;
+    localparam [2:0] VOLUME_MIN = 3'd0;
+    localparam [2:0] VOLUME_MAX = 3'd7;
     localparam [31:0] RETURN_TIMEOUT_TICKS = CLK_FREQ_HZ * 5;
 
     reg [31:0] inactivity_count;
@@ -35,6 +39,7 @@ module ui_controller #(
             selected_song       <= 1'b0;
             transpose_semitones <= 6'sd0;
             current_bpm         <= 8'd120;
+            volume_level        <= VOLUME_MAX;
             edit_mode           <= EDIT_SONG;
             inactivity_count    <= 32'd0;
             song_changed        <= 1'b0;
@@ -57,6 +62,7 @@ module ui_controller #(
                 case (edit_mode)
                     EDIT_SONG:      edit_mode <= EDIT_TRANSPOSE;
                     EDIT_TRANSPOSE: edit_mode <= EDIT_BPM;
+                    EDIT_BPM:       edit_mode <= EDIT_VOLUME;
                     default:        edit_mode <= EDIT_SONG;
                 endcase
             end else if (value_up_pressed && !value_down_pressed) begin
@@ -77,6 +83,10 @@ module ui_controller #(
                     EDIT_BPM: begin
                         if (current_bpm < BPM_MAX)
                             current_bpm <= current_bpm + 1'b1;
+                    end
+                    EDIT_VOLUME: begin
+                        if (volume_level < VOLUME_MAX)
+                            volume_level <= volume_level + 1'b1;
                     end
                     default: begin
                     end
@@ -99,6 +109,10 @@ module ui_controller #(
                     EDIT_BPM: begin
                         if (current_bpm > BPM_MIN)
                             current_bpm <= current_bpm - 1'b1;
+                    end
+                    EDIT_VOLUME: begin
+                        if (volume_level > VOLUME_MIN)
+                            volume_level <= volume_level - 1'b1;
                     end
                     default: begin
                     end

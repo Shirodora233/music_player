@@ -50,11 +50,14 @@ module tone_generator #(
         end
 
         case (volume_level)
-            3'd1: high_ticks = period_ticks >> 3;                         // 12.5%
-            3'd2: high_ticks = period_ticks >> 2;                         // 25.0%
-            3'd3: high_ticks = (period_ticks >> 2) + (period_ticks >> 3); // 37.5%
-            3'd4: high_ticks = period_ticks >> 1;                         // 50.0%
-            default: high_ticks = 32'd0;                                  // mute
+            3'd1: high_ticks = period_ticks >> 7; // 0.78%
+            3'd2: high_ticks = period_ticks >> 6; // 1.56%
+            3'd3: high_ticks = period_ticks >> 5; // 3.12%
+            3'd4: high_ticks = period_ticks >> 4; // 6.25%
+            3'd5: high_ticks = period_ticks >> 3; // 12.5%
+            3'd6: high_ticks = period_ticks >> 2; // 25.0%
+            3'd7: high_ticks = period_ticks >> 1; // 50.0%
+            default: high_ticks = 32'd0;          // mute
         endcase
     end
 

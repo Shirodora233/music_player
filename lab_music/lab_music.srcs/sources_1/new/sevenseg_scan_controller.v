@@ -31,6 +31,7 @@ module sevenseg_scan_controller #(
     localparam [4:0] GLYPH_T     = 5'd13;
     localparam [4:0] GLYPH_B     = 5'd14;
     localparam [4:0] GLYPH_PLUS  = 5'd15;
+    localparam [4:0] GLYPH_U     = 5'd16;
 
     localparam integer SCAN_TICKS_RAW = CLK_FREQ_HZ / SCAN_HZ;
     localparam integer SCAN_TICKS     = (SCAN_TICKS_RAW < 1) ? 1 : SCAN_TICKS_RAW;
@@ -61,6 +62,7 @@ module sevenseg_scan_controller #(
                 GLYPH_T:     decode_glyph = 8'b0111_1000;
                 GLYPH_B:     decode_glyph = 8'b0111_1100;
                 GLYPH_PLUS:  decode_glyph = 8'b0110_0010;
+                GLYPH_U:     decode_glyph = 8'b0011_1110;
                 GLYPH_BLANK: decode_glyph = 8'b0000_0000;
                 default:     decode_glyph = 8'b0000_0000;
             endcase
