@@ -1,0 +1,41 @@
+# Vivado generated directories
+**/.Xil/
+**/*.cache/
+**/*.hw/
+**/*.ip_user_files/
+**/*.runs/
+**/*.sim/
+**/*.gen/
+
+# Vivado generated files
+*.jou
+*.log
+*.str
+*.rpt
+*.rpx
+*.pb
+*.wdb
+*.wdf
+*.dcp
+*.bit
+*.ltx
+
+# Simulation and synthesis byproducts
+*.sdb
+*.rlx
+*.xdbg
+*.vdi
+
+# Local document/tooling scratch directories
+.docx_review/
+.tmp_docx/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# Office temporary files
+~$*
