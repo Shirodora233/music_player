@@ -13,6 +13,8 @@
 | `key_volume_up` | input | Increase the selected parameter |
 | `beep` | output | Passive buzzer output; board documentation specifies pin W19 |
 | `led[31:0]` | output | Board LED outputs; `board_led_mapper` maps logical rows to schematic LED nets |
+| `seg[31:0]` | output | Seven-segment A/B/C/D/E/F/G/DP lines for LED1 through LED4 |
+| `seg_cs[7:0]` | output | Seven-segment digit select lines, right-to-left on the board |
 
 Buttons are active-low. On the supplied schematic, the current allocation is
 KEY8 reset, KEY7 play/pause, KEY6 stop, KEY5 parameter select, KEY4 value down,
@@ -31,6 +33,8 @@ and KEY3 value up. The design and XDC both use the board's 200 MHz clock.
 | `key_volume_up` | KEY3 | D14 | Low |
 | `beep` | BEEP | W19 | Square-wave output |
 | `led[0]` ... `led[31]` | LED1 ... LED32 | see XDC | High |
+| `seg[0]` ... `seg[31]` | LED1 ... LED4 segment pins | see XDC | High |
+| `seg_cs[0]` ... `seg_cs[7]` | Eight seven-segment digit selects | see XDC | Low |
 
 The 32 discrete LEDs are treated as four logical rows, ordered left-to-right in
 the board photo. `led_panel_controller` drives the musical display and
@@ -42,6 +46,13 @@ the board photo. `led_panel_controller` drives the musical display and
 | Row 1 | Octave: octave 0 is all off, octaves 1 through 8 light one LED |
 | Row 2 | Flat flag, sharp flag, and beat flash on the final LED |
 | Row 3 | Playback progress bar based on elapsed sixteenth-note units |
+
+The seven-segment display is driven by `sevenseg_scan_controller`. It scans the
+eight digits from right to left, with `seg_cs[0]` as the rightmost digit and
+`seg_cs[7]` as the leftmost digit. Each physical two-digit module has its own
+A/B/C/D/E/F/G/DP segment bundle in `seg[31:0]`. The current hardware bring-up
+pattern is fixed to `12345678`; the next stage replaces this with playback time
+and parameter status.
 
 ## Parameter controls
 
@@ -76,15 +87,14 @@ seconds, the UI returns to the song display mode.
 The ROM also emits per-song metadata: note count, total duration in
 sixteenth-note units, default BPM, tonic, accidental, and mode. The current
 playback path sends this richer note word through `pitch_processor`, which
-computes both the sounding semitone pitch and the display spelling. Transpose is
-currently fixed at zero and will be connected to the parameter UI in a later
-stage.
+computes both the sounding semitone pitch and the display spelling. The
+transpose parameter is controlled by `ui_controller`.
 
 Playback timing uses each song's default BPM and the note `duration_16th` field.
 `beat_controller` emits one pulse per sixteenth note, one pulse per quarter-note
 beat, and a note-done pulse at the end of the encoded duration. `music_top`
 counts elapsed sixteenth-note units and elapsed seconds while playback is
-running; those counters feed the later LED progress bar and seven-segment time
+running; those counters feed the LED progress bar and seven-segment time
 display.
 
 The pin assignments are stored in `lab_music.srcs/constrs_1/new/music.xdc`.

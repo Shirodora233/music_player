@@ -29,6 +29,7 @@
 # Local document/tooling scratch directories
 .docx_review/
 .tmp_docx/
+tmp/
 
 # OS and editor noise
 .DS_Store

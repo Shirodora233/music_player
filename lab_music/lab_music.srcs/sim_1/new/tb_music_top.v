@@ -11,6 +11,8 @@ module tb_music_top;
     reg key_volume_up;
     wire beep;
     wire [31:0] led;
+    wire [31:0] seg;
+    wire [7:0] seg_cs;
 
     integer errors;
     integer beep_edges;
@@ -30,7 +32,9 @@ module tb_music_top;
         .key_volume_down(key_volume_down),
         .key_volume_up(key_volume_up),
         .beep(beep),
-        .led(led)
+        .led(led),
+        .seg(seg),
+        .seg_cs(seg_cs)
     );
 
     always #5000 clk = ~clk;
@@ -113,6 +117,11 @@ module tb_music_top;
 
         if (dut.current_bpm != 8'd120) begin
             $display("ERROR: default BPM did not load from song metadata");
+            errors = errors + 1;
+        end
+
+        if ((seg_cs != 8'b1111_1110) || (seg[31:24] != 8'b0111_1111)) begin
+            $display("ERROR: seven-segment scanner did not start on rightmost digit 8");
             errors = errors + 1;
         end
 
