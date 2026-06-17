@@ -5,10 +5,9 @@ module player_controller (
     input  wire       rst_n,
     input  wire       play_pause_pressed,
     input  wire       stop_pressed,
-    input  wire       next_pressed,
+    input  wire       song_changed,
     input  wire       note_done,
     input  wire [7:0] song_length,
-    output reg  [0:0] selected_song,
     output reg  [7:0] note_index,
     output wire       playing,
     output wire       paused,
@@ -28,14 +27,13 @@ module player_controller (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state         <= STATE_STOPPED;
-            selected_song <= 1'b0;
             note_index    <= 8'd0;
         end else if (stop_pressed) begin
             state      <= STATE_STOPPED;
             note_index <= 8'd0;
-        end else if (next_pressed) begin
-            selected_song <= ~selected_song;
-            note_index    <= 8'd0;
+        end else if (song_changed) begin
+            state      <= STATE_STOPPED;
+            note_index <= 8'd0;
         end else if (play_pause_pressed) begin
             case (state)
                 STATE_PLAYING: state <= STATE_PAUSED;

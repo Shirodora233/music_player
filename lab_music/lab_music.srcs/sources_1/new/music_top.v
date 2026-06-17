@@ -29,6 +29,7 @@ module music_top #(
     wire volume_up_pressed;
 
     wire [0:0] selected_song;
+    wire song_changed;
     wire [7:0] note_index;
     wire [15:0] note_word;
     wire note_is_rest;
@@ -54,6 +55,7 @@ module music_top #(
     wire playing;
     wire paused;
     wire stopped;
+    wire [1:0] edit_mode;
     wire [2:0] volume_level;
     wire [7:0] status_led;
     wire [7:0] led_row3;
@@ -62,6 +64,8 @@ module music_top #(
     reg [31:0] second_tick_count;
 
     localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
+
+    assign volume_level = 3'd4;
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
@@ -124,12 +128,21 @@ module music_top #(
         .key_pressed(volume_up_pressed)
     );
 
-    volume_controller u_volume_controller (
+    ui_controller #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ),
+        .SONG_COUNT(2)
+    ) u_ui_controller (
         .clk(clk),
         .rst_n(rst_n),
-        .volume_down_pressed(volume_down_pressed),
-        .volume_up_pressed(volume_up_pressed),
-        .volume_level(volume_level)
+        .next_pressed(next_pressed),
+        .value_down_pressed(volume_down_pressed),
+        .value_up_pressed(volume_up_pressed),
+        .default_bpm(default_bpm),
+        .selected_song(selected_song),
+        .transpose_semitones(transpose_semitones),
+        .current_bpm(current_bpm),
+        .edit_mode(edit_mode),
+        .song_changed(song_changed)
     );
 
     player_controller u_player (
@@ -137,10 +150,9 @@ module music_top #(
         .rst_n(rst_n),
         .play_pause_pressed(play_pressed),
         .stop_pressed(stop_pressed),
-        .next_pressed(next_pressed),
+        .song_changed(song_changed),
         .note_done(note_done),
         .song_length(song_length),
-        .selected_song(selected_song),
         .note_index(note_index),
         .playing(playing),
         .paused(paused),
@@ -159,12 +171,10 @@ module music_top #(
         .key_mode(key_mode)
     );
 
-    assign transpose_semitones = 6'sd0;
-    assign current_bpm = default_bpm;
     assign duration_16th = note_word[5:0];
     assign song_wrap = note_done &&
                        ((song_length == 0) || (note_index >= song_length - 1'b1));
-    assign playback_timing_clear = stopped || stop_pressed || next_pressed || song_wrap;
+    assign playback_timing_clear = stopped || stop_pressed || song_changed || song_wrap;
 
     pitch_processor u_pitch_processor (
         .transpose_semitones(transpose_semitones),

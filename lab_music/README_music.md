@@ -8,15 +8,15 @@
 | `rst_n` | input | Active-low reset |
 | `key_play_pause` | input | Play/pause button |
 | `key_stop` | input | Stop button; returns to the first note |
-| `key_next` | input | Switch between the two built-in songs |
-| `key_volume_down` | input | Reduce volume; level 0 is mute |
-| `key_volume_up` | input | Increase volume |
+| `key_next` | input | Cycle the selected editable parameter |
+| `key_volume_down` | input | Decrease the selected parameter |
+| `key_volume_up` | input | Increase the selected parameter |
 | `beep` | output | Passive buzzer output; board documentation specifies pin W19 |
 | `led[31:0]` | output | Board LED outputs; `board_led_mapper` maps logical rows to schematic LED nets |
 
 Buttons are active-low. On the supplied schematic, the current allocation is
-KEY8 reset, KEY7 play/pause, KEY6 stop, KEY5 next song, KEY4 volume down, and
-KEY3 volume up. The design and XDC both use the board's 200 MHz clock.
+KEY8 reset, KEY7 play/pause, KEY6 stop, KEY5 parameter select, KEY4 value down,
+and KEY3 value up. The design and XDC both use the board's 200 MHz clock.
 
 ## Board pin allocation
 
@@ -36,6 +36,19 @@ For now, the original playback state display is preserved on the bottom LED row:
 playing, paused, stopped, song select, and the four-step volume bar. The
 `board_led_mapper` module keeps this temporary status display separate from the
 physical board pin order so the full panel UI can be added later.
+
+## Parameter controls
+
+`ui_controller` manages three editable parameters. `key_next` cycles through
+song, transpose, and BPM. `key_volume_down` and `key_volume_up` decrement or
+increment the selected parameter. If no parameter key is pressed for five
+seconds, the UI returns to the song display mode.
+
+| Parameter | Range | Notes |
+| --- | --- | --- |
+| Song | 0 to 1 | Changing songs stops playback and returns to note 0 |
+| Transpose | -12 to +12 semitones | Display spelling follows interval-based transposition |
+| BPM | 30 to 250 | Default starts at the song metadata BPM |
 
 ## Built-in songs
 

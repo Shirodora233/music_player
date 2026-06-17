@@ -126,21 +126,72 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        press_volume_down;
-        press_volume_down;
-        press_volume_down;
-        press_volume_down;
+        press_volume_up;
         repeat (10) @(posedge clk);
-        if ((dut.volume_level != 3'd0) || (beep !== 1'b0) || (dut.status_led[7:4] != 4'b0000)) begin
-            $display("ERROR: volume down did not reach mute");
+        if ((dut.selected_song != 1'b1) || !dut.stopped || (dut.note_index != 0)) begin
+            $display("ERROR: song parameter increment did not select and stop at song 1");
             errors = errors + 1;
         end
 
-        beep_edges = 0;
+        press_volume_down;
+        repeat (10) @(posedge clk);
+        if ((dut.selected_song != 1'b0) || (dut.note_index != 0)) begin
+            $display("ERROR: song parameter decrement did not wrap back to song 0");
+            errors = errors + 1;
+        end
+
+        press_next;
+        if (dut.edit_mode != 2'd1) begin
+            $display("ERROR: next key did not select transpose edit mode");
+            errors = errors + 1;
+        end
+
         press_volume_up;
-        repeat (500) @(posedge clk);
-        if ((dut.volume_level != 3'd1) || (beep_edges == 0) || (dut.status_led[7:4] != 4'b0001)) begin
-            $display("ERROR: volume up did not leave mute at level 1");
+        repeat (10) @(posedge clk);
+        if ((dut.transpose_semitones != 6'sd1) ||
+            (dut.semitone_pitch != 8'd61) ||
+            (dut.display_note_name != 3'd1) ||
+            (dut.display_accidental != 2'd0)) begin
+            $display("ERROR: transpose increment did not produce Db4");
+            errors = errors + 1;
+        end
+
+        press_volume_down;
+        repeat (10) @(posedge clk);
+        if ((dut.transpose_semitones != 6'sd0) || (dut.semitone_pitch != 8'd60)) begin
+            $display("ERROR: transpose decrement did not return to C4");
+            errors = errors + 1;
+        end
+
+        press_next;
+        if (dut.edit_mode != 2'd2) begin
+            $display("ERROR: next key did not select BPM edit mode");
+            errors = errors + 1;
+        end
+
+        press_volume_up;
+        repeat (10) @(posedge clk);
+        if (dut.current_bpm != 8'd121) begin
+            $display("ERROR: BPM increment did not reach 121");
+            errors = errors + 1;
+        end
+
+        press_volume_down;
+        repeat (10) @(posedge clk);
+        if (dut.current_bpm != 8'd120) begin
+            $display("ERROR: BPM decrement did not return to 120");
+            errors = errors + 1;
+        end
+
+        press_next;
+        if (dut.edit_mode != 2'd0) begin
+            $display("ERROR: next key did not return to song edit mode");
+            errors = errors + 1;
+        end
+
+        press_play_pause;
+        if (!dut.playing) begin
+            $display("ERROR: play key did not restart playback after UI edits");
             errors = errors + 1;
         end
 
@@ -153,12 +204,6 @@ module tb_music_top;
         end
 
         press_play_pause;
-        press_next;
-        if ((dut.selected_song != 1'b1) || (dut.note_index != 0)) begin
-            $display("ERROR: next key did not select and restart song 1");
-            errors = errors + 1;
-        end
-
         press_stop;
         if (!dut.stopped || (dut.note_index != 0) || (beep !== 1'b0)) begin
             $display("ERROR: stop key did not reset playback");
@@ -166,7 +211,7 @@ module tb_music_top;
         end
 
         if (errors == 0)
-            $display("PASS: music player control, tone, and volume tests completed");
+            $display("PASS: music player control, tone, pitch, and UI tests completed");
         else
             $display("FAIL: %0d test(s) failed", errors);
 

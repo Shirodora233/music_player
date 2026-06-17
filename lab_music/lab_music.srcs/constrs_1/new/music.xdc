@@ -20,15 +20,15 @@ set_property IOSTANDARD LVCMOS33 [get_ports key_play_pause]
 set_property PACKAGE_PIN E14 [get_ports key_stop]
 set_property IOSTANDARD LVCMOS33 [get_ports key_stop]
 
-## Schematic KEY5: next song
+## Schematic KEY5: parameter select
 set_property PACKAGE_PIN B13 [get_ports key_next]
 set_property IOSTANDARD LVCMOS33 [get_ports key_next]
 
-## Schematic KEY4: volume down (level 0 is mute)
+## Schematic KEY4: selected parameter down
 set_property PACKAGE_PIN A13 [get_ports key_volume_down]
 set_property IOSTANDARD LVCMOS33 [get_ports key_volume_down]
 
-## Schematic KEY3: volume up
+## Schematic KEY3: selected parameter up
 set_property PACKAGE_PIN D14 [get_ports key_volume_up]
 set_property IOSTANDARD LVCMOS33 [get_ports key_volume_up]
 
