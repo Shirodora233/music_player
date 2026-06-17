@@ -97,6 +97,14 @@ module tb_music_top;
         rst_n = 1'b1;
         repeat (10) @(posedge clk);
 
+        if ((dut.semitone_pitch != 8'd60) ||
+            (dut.display_note_name != 3'd0) ||
+            (dut.display_accidental != 2'd1) ||
+            (dut.display_octave != 4'd4)) begin
+            $display("ERROR: initial pitch did not decode as natural C4");
+            errors = errors + 1;
+        end
+
         press_play_pause;
         if (!dut.playing) begin
             $display("ERROR: play key did not start playback");

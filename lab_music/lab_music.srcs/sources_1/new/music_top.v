@@ -33,13 +33,14 @@ module music_top #(
     wire [7:0] note_index;
     wire [15:0] note_word;
     wire note_is_rest;
-    wire [2:0] note_name;
-    wire [1:0] note_accidental;
-    wire [3:0] note_octave;
     wire [5:0] duration_16th;
     wire [5:0] duration_beats_raw;
-    wire [4:0] note_code;
     wire [3:0] note_duration;
+    wire signed [5:0] transpose_semitones;
+    wire [7:0] semitone_pitch;
+    wire [2:0] display_note_name;
+    wire [1:0] display_accidental;
+    wire [3:0] display_octave;
     wire [7:0] song_length;
     wire [15:0] total_duration_16th;
     wire [7:0] default_bpm;
@@ -54,14 +55,6 @@ module music_top #(
     wire [2:0] volume_level;
     wire [7:0] status_led;
     wire [7:0] led_row3;
-    reg [4:0] decoded_note_code;
-
-    localparam [2:0] NOTE_NAME_C = 3'd0;
-    localparam [2:0] NOTE_NAME_D = 3'd1;
-    localparam [2:0] NOTE_NAME_E = 3'd2;
-    localparam [2:0] NOTE_NAME_F = 3'd3;
-    localparam [2:0] NOTE_NAME_G = 3'd4;
-    localparam [2:0] NOTE_NAME_A = 3'd5;
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
@@ -159,26 +152,20 @@ module music_top #(
         .key_mode(key_mode)
     );
 
-    assign note_is_rest = note_word[15];
-    assign note_name = note_word[14:12];
-    assign note_accidental = note_word[11:10];
-    assign note_octave = note_word[9:6];
+    assign transpose_semitones = 6'sd0;
     assign duration_16th = note_word[5:0];
     assign duration_beats_raw = (duration_16th + 6'd3) >> 2;
     assign note_duration = (duration_beats_raw == 0) ? 4'd1 : duration_beats_raw[3:0];
-    assign note_code = note_is_rest ? 5'd0 : decoded_note_code;
 
-    always @(*) begin
-        case (note_name)
-            NOTE_NAME_C: decoded_note_code = 5'd1;
-            NOTE_NAME_D: decoded_note_code = 5'd2;
-            NOTE_NAME_E: decoded_note_code = 5'd3;
-            NOTE_NAME_F: decoded_note_code = 5'd4;
-            NOTE_NAME_G: decoded_note_code = 5'd5;
-            NOTE_NAME_A: decoded_note_code = 5'd6;
-            default:     decoded_note_code = 5'd0;
-        endcase
-    end
+    pitch_processor u_pitch_processor (
+        .transpose_semitones(transpose_semitones),
+        .note_word(note_word),
+        .semitone_pitch(semitone_pitch),
+        .display_note_name(display_note_name),
+        .display_accidental(display_accidental),
+        .display_octave(display_octave),
+        .is_rest(note_is_rest)
+    );
 
     beat_controller #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ),
@@ -200,7 +187,8 @@ module music_top #(
         .clk(clk),
         .rst_n(rst_n),
         .enable(tone_enable),
-        .note_code(note_code),
+        .is_rest(note_is_rest),
+        .semitone_pitch(semitone_pitch),
         .volume_level(volume_level),
         .beep(beep)
     );

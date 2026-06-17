@@ -56,9 +56,10 @@ physical board pin order so the full panel UI can be added later.
 
 The ROM also emits per-song metadata: note count, total duration in
 sixteenth-note units, default BPM, tonic, accidental, and mode. The current
-playback path temporarily decodes this richer note word back into the original
-tone-generator note codes; later stages use the full fields for transposition
-and panel display.
+playback path sends this richer note word through `pitch_processor`, which
+computes both the sounding semitone pitch and the display spelling. Transpose is
+currently fixed at zero and will be connected to the parameter UI in a later
+stage.
 
 The pin assignments are stored in `lab_music.srcs/constrs_1/new/music.xdc`.
 They are based on `xc7k325t-V2.1-out.pdf` and the supplied board photo. The
