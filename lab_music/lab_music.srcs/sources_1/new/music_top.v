@@ -57,7 +57,9 @@ module music_top #(
     wire stopped;
     wire [1:0] edit_mode;
     wire [2:0] volume_level;
-    wire [7:0] status_led;
+    wire [7:0] led_row0;
+    wire [7:0] led_row1;
+    wire [7:0] led_row2;
     wire [7:0] led_row3;
     reg [15:0] elapsed_16th_units;
     reg [15:0] elapsed_seconds;
@@ -236,30 +238,28 @@ module music_top #(
         .beep(beep)
     );
 
-    // Temporary status display on the bottom physical LED row.
-    assign status_led[0] = playing;
-    assign status_led[1] = paused;
-    assign status_led[2] = stopped;
-    assign status_led[3] = selected_song[0];
-    assign status_led[4] = (volume_level >= 3'd1);
-    assign status_led[5] = (volume_level >= 3'd2);
-    assign status_led[6] = (volume_level >= 3'd3);
-    assign status_led[7] = (volume_level >= 3'd4);
-    assign led_row3 = {
-        status_led[0],
-        status_led[1],
-        status_led[2],
-        status_led[3],
-        status_led[4],
-        status_led[5],
-        status_led[6],
-        status_led[7]
-    };
+    led_panel_controller #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ)
+    ) u_led_panel_controller (
+        .clk(clk),
+        .rst_n(rst_n),
+        .is_rest(note_is_rest),
+        .display_note_name(display_note_name),
+        .display_accidental(display_accidental),
+        .display_octave(display_octave),
+        .beat_pulse(beat_pulse),
+        .elapsed_16th_units(elapsed_16th_units),
+        .total_duration_16th(total_duration_16th),
+        .row0(led_row0),
+        .row1(led_row1),
+        .row2(led_row2),
+        .row3(led_row3)
+    );
 
     board_led_mapper u_board_led_mapper (
-        .row0(8'b0000_0000),
-        .row1(8'b0000_0000),
-        .row2(8'b0000_0000),
+        .row0(led_row0),
+        .row1(led_row1),
+        .row2(led_row2),
         .row3(led_row3),
         .led(led)
     );

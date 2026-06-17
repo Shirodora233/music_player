@@ -32,10 +32,16 @@ and KEY3 value up. The design and XDC both use the board's 200 MHz clock.
 | `beep` | BEEP | W19 | Square-wave output |
 | `led[0]` ... `led[31]` | LED1 ... LED32 | see XDC | High |
 
-For now, the original playback state display is preserved on the bottom LED row:
-playing, paused, stopped, song select, and the four-step volume bar. The
-`board_led_mapper` module keeps this temporary status display separate from the
-physical board pin order so the full panel UI can be added later.
+The 32 discrete LEDs are treated as four logical rows, ordered left-to-right in
+the board photo. `led_panel_controller` drives the musical display and
+`board_led_mapper` translates those four rows to schematic LED nets.
+
+| Row | Display |
+| --- | --- |
+| Row 0 | Current note name: C, D, E, F, G, A, B on the first seven LEDs |
+| Row 1 | Octave: octave 0 is all off, octaves 1 through 8 light one LED |
+| Row 2 | Flat flag, sharp flag, and beat flash on the final LED |
+| Row 3 | Playback progress bar based on elapsed sixteenth-note units |
 
 ## Parameter controls
 

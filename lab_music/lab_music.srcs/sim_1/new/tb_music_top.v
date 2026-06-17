@@ -104,6 +104,13 @@ module tb_music_top;
             errors = errors + 1;
         end
 
+        if ((dut.led_row0 != 8'b0000_0001) ||
+            (dut.led_row1 != 8'b0000_1000) ||
+            (dut.led_row2[1:0] != 2'b00)) begin
+            $display("ERROR: LED panel did not show natural C4");
+            errors = errors + 1;
+        end
+
         if (dut.current_bpm != 8'd120) begin
             $display("ERROR: default BPM did not load from song metadata");
             errors = errors + 1;
@@ -151,7 +158,9 @@ module tb_music_top;
         if ((dut.transpose_semitones != 6'sd1) ||
             (dut.semitone_pitch != 8'd61) ||
             (dut.display_note_name != 3'd1) ||
-            (dut.display_accidental != 2'd0)) begin
+            (dut.display_accidental != 2'd0) ||
+            (dut.led_row0 != 8'b0000_0010) ||
+            (dut.led_row2[1:0] != 2'b01)) begin
             $display("ERROR: transpose increment did not produce Db4");
             errors = errors + 1;
         end
