@@ -30,10 +30,22 @@ module music_top #(
     wire volume_up_pressed;
 
     wire [0:0] selected_song;
-    wire [5:0] note_index;
+    wire [7:0] note_index;
+    wire [15:0] note_word;
+    wire note_is_rest;
+    wire [2:0] note_name;
+    wire [1:0] note_accidental;
+    wire [3:0] note_octave;
+    wire [5:0] duration_16th;
+    wire [5:0] duration_beats_raw;
     wire [4:0] note_code;
     wire [3:0] note_duration;
-    wire [5:0] song_length;
+    wire [7:0] song_length;
+    wire [15:0] total_duration_16th;
+    wire [7:0] default_bpm;
+    wire [2:0] key_tonic;
+    wire [1:0] key_accidental;
+    wire key_mode;
     wire note_done;
     wire tone_enable;
     wire playing;
@@ -42,6 +54,14 @@ module music_top #(
     wire [2:0] volume_level;
     wire [7:0] status_led;
     wire [7:0] led_row3;
+    reg [4:0] decoded_note_code;
+
+    localparam [2:0] NOTE_NAME_C = 3'd0;
+    localparam [2:0] NOTE_NAME_D = 3'd1;
+    localparam [2:0] NOTE_NAME_E = 3'd2;
+    localparam [2:0] NOTE_NAME_F = 3'd3;
+    localparam [2:0] NOTE_NAME_G = 3'd4;
+    localparam [2:0] NOTE_NAME_A = 3'd5;
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
@@ -130,10 +150,35 @@ module music_top #(
     song_rom u_song_rom (
         .song_select(selected_song),
         .note_index(note_index),
-        .note_code(note_code),
-        .duration_beats(note_duration),
-        .song_length(song_length)
+        .note_word(note_word),
+        .song_length(song_length),
+        .total_duration_16th(total_duration_16th),
+        .default_bpm(default_bpm),
+        .key_tonic(key_tonic),
+        .key_accidental(key_accidental),
+        .key_mode(key_mode)
     );
+
+    assign note_is_rest = note_word[15];
+    assign note_name = note_word[14:12];
+    assign note_accidental = note_word[11:10];
+    assign note_octave = note_word[9:6];
+    assign duration_16th = note_word[5:0];
+    assign duration_beats_raw = (duration_16th + 6'd3) >> 2;
+    assign note_duration = (duration_beats_raw == 0) ? 4'd1 : duration_beats_raw[3:0];
+    assign note_code = note_is_rest ? 5'd0 : decoded_note_code;
+
+    always @(*) begin
+        case (note_name)
+            NOTE_NAME_C: decoded_note_code = 5'd1;
+            NOTE_NAME_D: decoded_note_code = 5'd2;
+            NOTE_NAME_E: decoded_note_code = 5'd3;
+            NOTE_NAME_F: decoded_note_code = 5'd4;
+            NOTE_NAME_G: decoded_note_code = 5'd5;
+            NOTE_NAME_A: decoded_note_code = 5'd6;
+            default:     decoded_note_code = 5'd0;
+        endcase
+    end
 
     beat_controller #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ),

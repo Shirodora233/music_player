@@ -14,7 +14,7 @@ module tb_music_top;
 
     integer errors;
     integer beep_edges;
-    reg [5:0] paused_index;
+    reg [7:0] paused_index;
 
     music_top #(
         .CLK_FREQ_HZ(100_000),

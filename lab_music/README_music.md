@@ -42,8 +42,27 @@ physical board pin order so the full panel UI can be added later.
 - Song 0: Twinkle Twinkle Little Star
 - Song 1: Two Tigers
 
+## Song encoding
+
+`song_rom` stores each note as a 16-bit word:
+
+| Bits | Field | Description |
+| --- | --- | --- |
+| `[15]` | `rest` | 1 for a rest, 0 for a pitched note |
+| `[14:12]` | `note_name` | C, D, E, F, G, A, B |
+| `[11:10]` | `accidental` | flat, natural, sharp |
+| `[9:6]` | `octave` | octave 0 through 8 |
+| `[5:0]` | `duration_16th` | duration in sixteenth-note units |
+
+The ROM also emits per-song metadata: note count, total duration in
+sixteenth-note units, default BPM, tonic, accidental, and mode. The current
+playback path temporarily decodes this richer note word back into the original
+tone-generator note codes; later stages use the full fields for transposition
+and panel display.
+
 The pin assignments are stored in `lab_music.srcs/constrs_1/new/music.xdc`.
-They were mapped from `ALU模块上板测试引脚表.xlsx`. The buzzer constraint is:
+They are based on `xc7k325t-V2.1-out.pdf` and the supplied board photo. The
+buzzer constraint is:
 
 ```tcl
 set_property PACKAGE_PIN W19 [get_ports beep]
