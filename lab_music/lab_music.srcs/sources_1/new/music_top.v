@@ -30,7 +30,7 @@ module music_top #(
     wire volume_down_pressed;
     wire volume_up_pressed;
 
-    wire [0:0] selected_song;
+    wire [1:0] selected_song;
     wire song_changed;
     wire [7:0] note_index;
     wire [15:0] note_word;
@@ -78,7 +78,7 @@ module music_top #(
 
     localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
 
-    assign selected_song_index = {7'd0, selected_song};
+    assign selected_song_index = {6'd0, selected_song};
     assign safe_beats_per_bar =
         ((beats_per_bar >= 3'd2) && (beats_per_bar <= 3'd4)) ?
         beats_per_bar : 3'd4;
@@ -149,7 +149,7 @@ module music_top #(
 
     ui_controller #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ),
-        .SONG_COUNT(2)
+        .SONG_COUNT(3)
     ) u_ui_controller (
         .clk(clk),
         .rst_n(rst_n),

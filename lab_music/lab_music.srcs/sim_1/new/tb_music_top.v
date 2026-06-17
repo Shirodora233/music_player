@@ -165,15 +165,40 @@ module tb_music_top;
 
         press_volume_up;
         repeat (10) @(posedge clk);
-        if ((dut.selected_song != 1'b1) || !dut.stopped || (dut.note_index != 0)) begin
+        if ((dut.selected_song != 2'd1) || !dut.stopped || (dut.note_index != 0)) begin
             $display("ERROR: song parameter increment did not select and stop at song 1");
             errors = errors + 1;
         end
 
         press_volume_down;
         repeat (10) @(posedge clk);
-        if ((dut.selected_song != 1'b0) || (dut.note_index != 0)) begin
+        if ((dut.selected_song != 2'd0) || (dut.note_index != 0)) begin
             $display("ERROR: song parameter decrement did not wrap back to song 0");
+            errors = errors + 1;
+        end
+
+        press_volume_down;
+        repeat (10) @(posedge clk);
+        if ((dut.selected_song != 2'd2) ||
+            (dut.song_length != 8'd204) ||
+            (dut.total_duration_16th != 16'd1044) ||
+            (dut.current_bpm != 8'd200) ||
+            (dut.beats_per_bar != 3'd3) ||
+            (dut.key_tonic != 3'd6) ||
+            (dut.semitone_pitch != 8'd75) ||
+            (dut.display_note_name != 3'd1) ||
+            (dut.display_accidental != 2'd2) ||
+            (dut.display_octave != 4'd5) ||
+            (dut.led_row2[7:4] != 4'b0010) ||
+            (dut.sevenseg_glyphs[39:20] != {5'd12, 5'd0, 5'd0, 5'd3})) begin
+            $display("ERROR: song parameter decrement did not select Haruhikage metadata");
+            errors = errors + 1;
+        end
+
+        press_volume_up;
+        repeat (10) @(posedge clk);
+        if ((dut.selected_song != 2'd0) || (dut.current_bpm != 8'd120)) begin
+            $display("ERROR: song parameter increment did not wrap back to song 0");
             errors = errors + 1;
         end
 

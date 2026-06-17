@@ -10,7 +10,7 @@ module ui_controller #(
     input  wire              value_down_pressed,
     input  wire              value_up_pressed,
     input  wire [7:0]        default_bpm,
-    output reg  [0:0]        selected_song,
+    output reg  [1:0]        selected_song,
     output reg signed [5:0]  transpose_semitones,
     output reg  [7:0]        current_bpm,
     output reg  [2:0]        volume_level,
@@ -32,6 +32,7 @@ module ui_controller #(
     localparam [31:0] RETURN_TIMEOUT_TICKS = CLK_FREQ_HZ * 5;
 
     reg [31:0] inactivity_count;
+    reg load_default_bpm_pending;
     wire edit_event = next_pressed || value_down_pressed || value_up_pressed;
 
     always @(posedge clk or negedge rst_n) begin
@@ -42,9 +43,15 @@ module ui_controller #(
             volume_level        <= VOLUME_MAX;
             edit_mode           <= EDIT_SONG;
             inactivity_count    <= 32'd0;
+            load_default_bpm_pending <= 1'b0;
             song_changed        <= 1'b0;
         end else begin
             song_changed <= 1'b0;
+
+            if (load_default_bpm_pending) begin
+                current_bpm <= default_bpm;
+                load_default_bpm_pending <= 1'b0;
+            end
 
             if (edit_event) begin
                 inactivity_count <= 32'd0;
@@ -70,10 +77,11 @@ module ui_controller #(
                     EDIT_SONG: begin
                         if (SONG_COUNT > 1) begin
                             if (selected_song >= SONG_COUNT - 1)
-                                selected_song <= 1'b0;
+                                selected_song <= 2'd0;
                             else
                                 selected_song <= selected_song + 1'b1;
                             song_changed <= 1'b1;
+                            load_default_bpm_pending <= 1'b1;
                         end
                     end
                     EDIT_TRANSPOSE: begin
@@ -100,6 +108,7 @@ module ui_controller #(
                             else
                                 selected_song <= selected_song - 1'b1;
                             song_changed <= 1'b1;
+                            load_default_bpm_pending <= 1'b1;
                         end
                     end
                     EDIT_TRANSPOSE: begin

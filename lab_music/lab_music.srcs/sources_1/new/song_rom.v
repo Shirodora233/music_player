@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module song_rom (
-    input  wire [0:0] song_select,
+    input  wire [1:0] song_select,
     input  wire [7:0] note_index,
     output reg  [15:0] note_word,
     output reg  [7:0] song_length,
@@ -28,8 +28,14 @@ module song_rom (
 
     localparam       MODE_MAJOR = 1'b0;
 
-    localparam [5:0] DUR_QUARTER = 6'd4;
-    localparam [5:0] DUR_HALF    = 6'd8;
+    localparam [5:0] DUR_EIGHTH          = 6'd2;
+    localparam [5:0] DUR_QUARTER         = 6'd4;
+    localparam [5:0] DUR_DOTTED_QUARTER  = 6'd6;
+    localparam [5:0] DUR_HALF            = 6'd8;
+    localparam [5:0] DUR_DOTTED_HALF     = 6'd12;
+    localparam [5:0] DUR_WHOLE           = 6'd16;
+    localparam [5:0] DUR_FIVE_QUARTER    = 6'd20;
+    localparam [5:0] DUR_SIX_QUARTER     = 6'd24;
 
     function [15:0] note;
         input [2:0] name;
@@ -59,7 +65,7 @@ module song_rom (
         beats_per_bar       = 3'd4;
         first_beat_in_bar   = 2'd0;
 
-        if (song_select == 1'b0) begin
+        if (song_select == 2'd0) begin
             // Song 0: Twinkle Twinkle Little Star, 4/4 time.
             song_length         = 8'd42;
             total_duration_16th = 16'd192;
@@ -92,7 +98,7 @@ module song_rom (
                 8'd41:        note_word = note(N_C, ACC_NATURAL, 4'd4, DUR_HALF);
                 default:      note_word = rest(DUR_QUARTER);
             endcase
-        end else begin
+        end else if (song_select == 2'd1) begin
             // Song 1: Two Tigers, 4/4 time.
             song_length         = 8'd32;
             total_duration_16th = 16'd144;
@@ -116,6 +122,223 @@ module song_rom (
                 8'd27, 8'd30: note_word = note(N_G, ACC_NATURAL, 4'd4, DUR_QUARTER);
                 8'd28, 8'd31: note_word = note(N_C, ACC_NATURAL, 4'd4, DUR_HALF);
                 default:      note_word = rest(DUR_QUARTER);
+            endcase
+        end else begin
+            // Song 2: Haruhikage melody from MIDI, B major, 3/4 time.
+            song_length         = 8'd204;
+            total_duration_16th = 16'd1044;
+            default_bpm         = 8'd200;
+            key_tonic           = N_B;
+            key_accidental      = ACC_NATURAL;
+            key_mode            = MODE_MAJOR;
+            beats_per_bar       = 3'd3;
+            first_beat_in_bar   = 2'd0;
+            case (note_index)
+                8'd0  : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd1  : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd2  : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_HALF);
+                8'd3  : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd4  : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_DOTTED_QUARTER);
+                8'd5  : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd6  : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd7  : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_DOTTED_HALF);
+                8'd8  : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd9  : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd10 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_HALF);
+                8'd11 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd12 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_DOTTED_QUARTER);
+                8'd13 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd14 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd15 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd16 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_EIGHTH);
+                8'd17 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd18 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd19 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd20 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd21 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd22 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd23 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd24 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd25 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd26 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_QUARTER);
+                8'd27 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd28 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd29 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd30 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd31 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_EIGHTH);
+                8'd32 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd33 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_SIX_QUARTER);
+                8'd34 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd35 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd36 : note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd37 : note_word = note(N_A, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd38 : note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd39 : note_word = note(N_A, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd40 : note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd41 : note_word = note(N_A, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd42 : note_word = note(N_G, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd43 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd44 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd45 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd46 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd47 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd48 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd49 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd50 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd51 : note_word = note(N_F, ACC_SHARP, 4'd4, DUR_EIGHTH);
+                8'd52 : note_word = note(N_F, ACC_SHARP, 4'd4, DUR_EIGHTH);
+                8'd53 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd54 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd55 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd56 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd57 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd58 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_FIVE_QUARTER);
+                8'd59 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_QUARTER);
+                8'd60 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd61 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_HALF);
+                8'd62 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_QUARTER);
+                8'd63 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd64 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_QUARTER);
+                8'd65 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_HALF);
+                8'd66 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd67 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd68 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_QUARTER);
+                8'd69 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_SIX_QUARTER);
+                8'd70 : note_word = note(N_G, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd71 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd72 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd73 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd74 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd75 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd76 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd77 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_WHOLE);
+                8'd78 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd79 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd80 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd81 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd82 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd83 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd84 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd85 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_EIGHTH);
+                8'd86 : note_word = note(N_A, ACC_SHARP, 4'd4, DUR_EIGHTH);
+                8'd87 : note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_DOTTED_HALF);
+                8'd88 : note_word = note(N_G, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd89 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd90 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd91 : note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd92 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd93 : note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd94 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd95 : note_word = note(N_C, ACC_SHARP, 4'd5, DUR_DOTTED_HALF);
+                8'd96 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd97 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd98 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd99 : note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd100: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd101: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd102: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd103: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd104: note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd105: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd106: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_HALF);
+                8'd107: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd108: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_HALF);
+                8'd109: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd110: note_word = note(N_A, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd111: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd112: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_FIVE_QUARTER);
+                8'd113: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd114: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd115: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd116: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd117: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd118: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_DOTTED_HALF);
+                8'd119: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd120: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd121: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_FIVE_QUARTER);
+                8'd122: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd123: note_word = note(N_C, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd124: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd125: note_word = note(N_C, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd126: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd127: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd128: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd129: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd130: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd131: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd132: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd133: note_word = note(N_A, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd134: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_HALF);
+                8'd135: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_EIGHTH);
+                8'd136: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd137: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd138: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd139: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd140: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd141: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd142: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd143: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd144: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd145: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_DOTTED_HALF);
+                8'd146: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd147: note_word = note(N_C, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd148: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd149: note_word = note(N_C, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd150: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd151: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd152: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd153: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd154: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd155: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd156: note_word = note(N_G, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd157: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd158: note_word = note(N_A, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd159: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd160: note_word = note(N_D, ACC_SHARP, 4'd6, DUR_QUARTER);
+                8'd161: note_word = note(N_D, ACC_SHARP, 4'd6, DUR_QUARTER);
+                8'd162: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_QUARTER);
+                8'd163: note_word = note(N_E, ACC_NATURAL, 4'd6, DUR_QUARTER);
+                8'd164: note_word = note(N_D, ACC_SHARP, 4'd6, DUR_QUARTER);
+                8'd165: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_QUARTER);
+                8'd166: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_HALF);
+                8'd167: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd168: note_word = note(N_A, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd169: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_HALF);
+                8'd170: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd171: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd172: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_HALF);
+                8'd173: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd174: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_HALF);
+                8'd175: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd176: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd177: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_HALF);
+                8'd178: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd179: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_HALF);
+                8'd180: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_EIGHTH);
+                8'd181: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_EIGHTH);
+                8'd182: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_HALF);
+                8'd183: note_word = note(N_D, ACC_SHARP, 4'd6, DUR_EIGHTH);
+                8'd184: note_word = note(N_C, ACC_SHARP, 4'd6, DUR_EIGHTH);
+                8'd185: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_HALF);
+                8'd186: note_word = note(N_B, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd187: note_word = note(N_A, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd188: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd189: note_word = note(N_G, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd190: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd191: note_word = note(N_F, ACC_SHARP, 4'd5, DUR_HALF);
+                8'd192: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd193: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd194: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd195: note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd196: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_SIX_QUARTER);
+                8'd197: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd198: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd199: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd200: note_word = note(N_E, ACC_NATURAL, 4'd5, DUR_QUARTER);
+                8'd201: note_word = note(N_D, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd202: note_word = note(N_C, ACC_SHARP, 4'd5, DUR_QUARTER);
+                8'd203: note_word = note(N_B, ACC_NATURAL, 4'd4, DUR_SIX_QUARTER);
+                default: note_word = rest(DUR_QUARTER);
             endcase
         end
     end

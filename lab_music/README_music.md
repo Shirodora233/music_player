@@ -67,7 +67,7 @@ for five seconds, the UI returns to the song display mode.
 
 | Parameter | Range | Notes |
 | --- | --- | --- |
-| Song | 0 to 1 | Changing songs stops playback and returns to note 0 |
+| Song | 0 to 2 | Changing songs stops playback and returns to note 0 |
 | Transpose | -12 to +12 semitones | Display spelling follows interval-based transposition |
 | BPM | 30 to 250 | Default starts at the song metadata BPM |
 | Volume | 0 to 7 | 0 mutes the buzzer; low nonzero levels use narrow duty cycles |
@@ -76,6 +76,7 @@ for five seconds, the UI returns to the song display mode.
 
 - Song 0: Twinkle Twinkle Little Star
 - Song 1: Two Tigers
+- Song 2: Haruhikage MIDI melody
 
 ## Song encoding
 
