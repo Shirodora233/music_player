@@ -63,7 +63,10 @@ module music_top #(
     wire [7:0] led_row1;
     wire [7:0] led_row2;
     wire [7:0] led_row3;
-    wire [39:0] sevenseg_test_glyphs;
+    wire [7:0] selected_song_index;
+    wire [39:0] sevenseg_glyphs;
+    wire [7:0] sevenseg_decimal_points;
+    wire [7:0] sevenseg_blank;
     reg [15:0] elapsed_16th_units;
     reg [15:0] elapsed_seconds;
     reg [31:0] second_tick_count;
@@ -71,7 +74,7 @@ module music_top #(
     localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
 
     assign volume_level = 3'd4;
-    assign sevenseg_test_glyphs = {5'd1, 5'd2, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd8};
+    assign selected_song_index = {7'd0, selected_song};
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
@@ -268,14 +271,30 @@ module music_top #(
         .led(led)
     );
 
+    sevenseg_ui_formatter #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ)
+    ) u_sevenseg_formatter (
+        .clk(clk),
+        .rst_n(rst_n),
+        .edit_mode(edit_mode),
+        .selected_song(selected_song_index),
+        .transpose_semitones(transpose_semitones),
+        .bpm(current_bpm),
+        .elapsed_seconds(elapsed_seconds),
+        .paused(paused),
+        .glyphs(sevenseg_glyphs),
+        .decimal_points(sevenseg_decimal_points),
+        .blank(sevenseg_blank)
+    );
+
     sevenseg_scan_controller #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ)
     ) u_sevenseg_scan (
         .clk(clk),
         .rst_n(rst_n),
-        .glyphs(sevenseg_test_glyphs),
-        .decimal_points(8'b0000_0000),
-        .blank(8'b0000_0000),
+        .glyphs(sevenseg_glyphs),
+        .decimal_points(sevenseg_decimal_points),
+        .blank(sevenseg_blank),
         .seg(seg),
         .seg_cs(seg_cs)
     );

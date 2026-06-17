@@ -92,8 +92,12 @@ module sevenseg_scan_controller #(
             default: active_glyph = GLYPH_BLANK;
         endcase
 
-        raw_segments = blank[active_digit] ? 8'b0000_0000 : decode_glyph(active_glyph);
-        raw_segments[7] = raw_segments[7] | decimal_points[active_digit];
+        if (blank[active_digit]) begin
+            raw_segments = 8'b0000_0000;
+        end else begin
+            raw_segments = decode_glyph(active_glyph);
+            raw_segments[7] = raw_segments[7] | decimal_points[active_digit];
+        end
         driven_segments = SEG_ACTIVE_HIGH ? raw_segments : ~raw_segments;
 
         raw_cs = 8'b0000_0000;

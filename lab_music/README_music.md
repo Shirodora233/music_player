@@ -47,12 +47,16 @@ the board photo. `led_panel_controller` drives the musical display and
 | Row 2 | Flat flag, sharp flag, and beat flash on the final LED |
 | Row 3 | Playback progress bar based on elapsed sixteenth-note units |
 
-The seven-segment display is driven by `sevenseg_scan_controller`. It scans the
-eight digits from right to left, with `seg_cs[0]` as the rightmost digit and
-`seg_cs[7]` as the leftmost digit. Each physical two-digit module has its own
-A/B/C/D/E/F/G/DP segment bundle in `seg[31:0]`. The current hardware bring-up
-pattern is fixed to `12345678`; the next stage replaces this with playback time
-and parameter status.
+The seven-segment display is formatted by `sevenseg_ui_formatter` and scanned by
+`sevenseg_scan_controller`. It scans the eight digits from right to left, with
+`seg_cs[0]` as the rightmost digit and `seg_cs[7]` as the leftmost digit. Each
+physical two-digit module has its own A/B/C/D/E/F/G/DP segment bundle in
+`seg[31:0]`.
+
+| Digits | Display |
+| --- | --- |
+| Left four | Current selected parameter: `S001`, `t+00`, `t-12`, or `b120` |
+| Right four | Playback time as `MM.SS`; these four digits blink while paused |
 
 ## Parameter controls
 

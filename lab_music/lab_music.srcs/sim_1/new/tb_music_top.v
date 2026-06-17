@@ -120,8 +120,15 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        if ((seg_cs != 8'b1111_1110) || (seg[31:24] != 8'b0111_1111)) begin
-            $display("ERROR: seven-segment scanner did not start on rightmost digit 8");
+        if ((seg_cs != 8'b1111_1110) || (seg[31:24] != 8'b0011_1111)) begin
+            $display("ERROR: seven-segment scanner did not start on rightmost time digit 0");
+            errors = errors + 1;
+        end
+
+        if ((dut.sevenseg_glyphs != {5'd12, 5'd0, 5'd0, 5'd1, 5'd0, 5'd0, 5'd0, 5'd0}) ||
+            (dut.sevenseg_decimal_points != 8'b0000_0100) ||
+            (dut.sevenseg_blank != 8'b0000_0000)) begin
+            $display("ERROR: seven-segment formatter did not show S001 and 00.00");
             errors = errors + 1;
         end
 
@@ -174,6 +181,11 @@ module tb_music_top;
             errors = errors + 1;
         end
 
+        if (dut.sevenseg_glyphs[39:20] != {5'd13, 5'd15, 5'd0, 5'd1}) begin
+            $display("ERROR: seven-segment formatter did not show t+01");
+            errors = errors + 1;
+        end
+
         press_volume_down;
         repeat (10) @(posedge clk);
         if ((dut.transpose_semitones != 6'sd0) || (dut.semitone_pitch != 8'd60)) begin
@@ -191,6 +203,11 @@ module tb_music_top;
         repeat (10) @(posedge clk);
         if (dut.current_bpm != 8'd121) begin
             $display("ERROR: BPM increment did not reach 121");
+            errors = errors + 1;
+        end
+
+        if (dut.sevenseg_glyphs[39:20] != {5'd14, 5'd1, 5'd2, 5'd1}) begin
+            $display("ERROR: seven-segment formatter did not show b121");
             errors = errors + 1;
         end
 
