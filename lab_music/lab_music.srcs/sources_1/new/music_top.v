@@ -14,8 +14,8 @@ module music_top #(
     input  wire       key_next,
     input  wire       key_volume_down,
     input  wire       key_volume_up,
-    output wire       beep,
-    output wire [7:0] led
+    output wire        beep,
+    output wire [31:0] led
 );
 
     wire play_key_level;
@@ -40,6 +40,8 @@ module music_top #(
     wire paused;
     wire stopped;
     wire [2:0] volume_level;
+    wire [7:0] status_led;
+    wire [7:0] led_row3;
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
@@ -158,15 +160,33 @@ module music_top #(
         .beep(beep)
     );
 
-    // LEDs: playback state, selected song, and a four-step volume bar.
-    assign led[0]   = playing;
-    assign led[1]   = paused;
-    assign led[2]   = stopped;
-    assign led[3]   = selected_song[0];
-    assign led[4]   = (volume_level >= 3'd1);
-    assign led[5]   = (volume_level >= 3'd2);
-    assign led[6]   = (volume_level >= 3'd3);
-    assign led[7]   = (volume_level >= 3'd4);
+    // Temporary status display on the bottom physical LED row.
+    assign status_led[0] = playing;
+    assign status_led[1] = paused;
+    assign status_led[2] = stopped;
+    assign status_led[3] = selected_song[0];
+    assign status_led[4] = (volume_level >= 3'd1);
+    assign status_led[5] = (volume_level >= 3'd2);
+    assign status_led[6] = (volume_level >= 3'd3);
+    assign status_led[7] = (volume_level >= 3'd4);
+    assign led_row3 = {
+        status_led[0],
+        status_led[1],
+        status_led[2],
+        status_led[3],
+        status_led[4],
+        status_led[5],
+        status_led[6],
+        status_led[7]
+    };
+
+    board_led_mapper u_board_led_mapper (
+        .row0(8'b0000_0000),
+        .row1(8'b0000_0000),
+        .row2(8'b0000_0000),
+        .row3(led_row3),
+        .led(led)
+    );
 
 endmodule
 

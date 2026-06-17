@@ -10,7 +10,7 @@ module tb_music_top;
     reg key_volume_down;
     reg key_volume_up;
     wire beep;
-    wire [7:0] led;
+    wire [31:0] led;
 
     integer errors;
     integer beep_edges;
@@ -119,7 +119,7 @@ module tb_music_top;
         press_volume_down;
         press_volume_down;
         repeat (10) @(posedge clk);
-        if ((dut.volume_level != 3'd0) || (beep !== 1'b0) || (led[7:4] != 4'b0000)) begin
+        if ((dut.volume_level != 3'd0) || (beep !== 1'b0) || (dut.status_led[7:4] != 4'b0000)) begin
             $display("ERROR: volume down did not reach mute");
             errors = errors + 1;
         end
@@ -127,7 +127,7 @@ module tb_music_top;
         beep_edges = 0;
         press_volume_up;
         repeat (500) @(posedge clk);
-        if ((dut.volume_level != 3'd1) || (beep_edges == 0) || (led[7:4] != 4'b0001)) begin
+        if ((dut.volume_level != 3'd1) || (beep_edges == 0) || (dut.status_led[7:4] != 4'b0001)) begin
             $display("ERROR: volume up did not leave mute at level 1");
             errors = errors + 1;
         end
