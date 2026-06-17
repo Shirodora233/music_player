@@ -18,7 +18,6 @@ module tb_music_top;
 
     music_top #(
         .CLK_FREQ_HZ(100_000),
-        .BEAT_MS(10),
         .NOTE_GAP_MS(1),
         .DEBOUNCE_MS(1),
         .KEY_ACTIVE_LOW(1)
@@ -102,6 +101,11 @@ module tb_music_top;
             (dut.display_accidental != 2'd1) ||
             (dut.display_octave != 4'd4)) begin
             $display("ERROR: initial pitch did not decode as natural C4");
+            errors = errors + 1;
+        end
+
+        if (dut.current_bpm != 8'd120) begin
+            $display("ERROR: default BPM did not load from song metadata");
             errors = errors + 1;
         end
 

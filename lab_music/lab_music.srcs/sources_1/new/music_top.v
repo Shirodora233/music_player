@@ -2,7 +2,6 @@
 
 module music_top #(
     parameter integer CLK_FREQ_HZ    = 200_000_000,
-    parameter integer BEAT_MS        = 500,
     parameter integer NOTE_GAP_MS    = 20,
     parameter integer DEBOUNCE_MS    = 20,
     parameter integer KEY_ACTIVE_LOW = 1
@@ -34,9 +33,8 @@ module music_top #(
     wire [15:0] note_word;
     wire note_is_rest;
     wire [5:0] duration_16th;
-    wire [5:0] duration_beats_raw;
-    wire [3:0] note_duration;
     wire signed [5:0] transpose_semitones;
+    wire [7:0] current_bpm;
     wire [7:0] semitone_pitch;
     wire [2:0] display_note_name;
     wire [1:0] display_accidental;
@@ -48,13 +46,22 @@ module music_top #(
     wire [1:0] key_accidental;
     wire key_mode;
     wire note_done;
+    wire sixteenth_pulse;
+    wire beat_pulse;
     wire tone_enable;
+    wire song_wrap;
+    wire playback_timing_clear;
     wire playing;
     wire paused;
     wire stopped;
     wire [2:0] volume_level;
     wire [7:0] status_led;
     wire [7:0] led_row3;
+    reg [15:0] elapsed_16th_units;
+    reg [15:0] elapsed_seconds;
+    reg [31:0] second_tick_count;
+
+    localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
@@ -153,9 +160,11 @@ module music_top #(
     );
 
     assign transpose_semitones = 6'sd0;
+    assign current_bpm = default_bpm;
     assign duration_16th = note_word[5:0];
-    assign duration_beats_raw = (duration_16th + 6'd3) >> 2;
-    assign note_duration = (duration_beats_raw == 0) ? 4'd1 : duration_beats_raw[3:0];
+    assign song_wrap = note_done &&
+                       ((song_length == 0) || (note_index >= song_length - 1'b1));
+    assign playback_timing_clear = stopped || stop_pressed || next_pressed || song_wrap;
 
     pitch_processor u_pitch_processor (
         .transpose_semitones(transpose_semitones),
@@ -169,17 +178,41 @@ module music_top #(
 
     beat_controller #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ),
-        .BEAT_MS(BEAT_MS),
         .NOTE_GAP_MS(NOTE_GAP_MS)
     ) u_beat_controller (
         .clk(clk),
         .rst_n(rst_n),
         .enable(playing),
-        .clear(stopped || stop_pressed || next_pressed),
-        .duration_beats(note_duration),
+        .clear(playback_timing_clear),
+        .bpm(current_bpm),
+        .duration_16th(duration_16th),
         .note_done(note_done),
-        .tone_enable(tone_enable)
+        .tone_enable(tone_enable),
+        .sixteenth_pulse(sixteenth_pulse),
+        .beat_pulse(beat_pulse)
     );
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            elapsed_16th_units <= 16'd0;
+            elapsed_seconds    <= 16'd0;
+            second_tick_count  <= 32'd0;
+        end else if (playback_timing_clear) begin
+            elapsed_16th_units <= 16'd0;
+            elapsed_seconds    <= 16'd0;
+            second_tick_count  <= 32'd0;
+        end else if (playing) begin
+            if (sixteenth_pulse && (elapsed_16th_units < total_duration_16th))
+                elapsed_16th_units <= elapsed_16th_units + 1'b1;
+
+            if ((SECOND_TICKS <= 1) || (second_tick_count >= SECOND_TICKS - 1)) begin
+                second_tick_count <= 32'd0;
+                elapsed_seconds <= elapsed_seconds + 1'b1;
+            end else begin
+                second_tick_count <= second_tick_count + 1'b1;
+            end
+        end
+    end
 
     tone_generator #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ)

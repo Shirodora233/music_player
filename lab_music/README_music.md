@@ -61,6 +61,13 @@ computes both the sounding semitone pitch and the display spelling. Transpose is
 currently fixed at zero and will be connected to the parameter UI in a later
 stage.
 
+Playback timing uses each song's default BPM and the note `duration_16th` field.
+`beat_controller` emits one pulse per sixteenth note, one pulse per quarter-note
+beat, and a note-done pulse at the end of the encoded duration. `music_top`
+counts elapsed sixteenth-note units and elapsed seconds while playback is
+running; those counters feed the later LED progress bar and seven-segment time
+display.
+
 The pin assignments are stored in `lab_music.srcs/constrs_1/new/music.xdc`.
 They are based on `xc7k325t-V2.1-out.pdf` and the supplied board photo. The
 buzzer constraint is:
