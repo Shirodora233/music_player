@@ -71,9 +71,11 @@ beat 1.
 ## Parameter controls
 
 `ui_controller` manages five editable parameters. `key_next` cycles through
-song, transpose, BPM, volume, and playback mode. `key_volume_down` and `key_volume_up`
-decrement or increment the selected parameter. If no parameter key is pressed
-for five seconds, the UI returns to the song display mode.
+song, transpose, BPM, volume, and playback mode. `key_volume_down` and
+`key_volume_up` decrement or increment the selected parameter. These two value
+keys support long-press auto-repeat, with a faster repeat rate after a longer
+hold. If no parameter key is pressed for five seconds, the UI returns to the
+song display mode.
 
 | Parameter | Range | Notes |
 | --- | --- | --- |

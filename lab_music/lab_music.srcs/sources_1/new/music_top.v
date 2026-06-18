@@ -29,6 +29,10 @@ module music_top #(
     wire play_pressed;
     wire stop_pressed;
     wire next_pressed;
+    wire volume_down_key_state;
+    wire volume_up_key_state;
+    wire volume_down_single_pressed;
+    wire volume_up_single_pressed;
     wire volume_down_pressed;
     wire volume_up_pressed;
     wire display_mode_pressed;
@@ -157,8 +161,8 @@ module music_top #(
         .clk(clk),
         .rst_n(rst_n),
         .key_in(volume_down_key_level),
-        .key_state(),
-        .key_pressed(volume_down_pressed)
+        .key_state(volume_down_key_state),
+        .key_pressed(volume_down_single_pressed)
     );
 
     button_debounce #(
@@ -168,8 +172,28 @@ module music_top #(
         .clk(clk),
         .rst_n(rst_n),
         .key_in(volume_up_key_level),
-        .key_state(),
-        .key_pressed(volume_up_pressed)
+        .key_state(volume_up_key_state),
+        .key_pressed(volume_up_single_pressed)
+    );
+
+    key_repeat #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ)
+    ) u_repeat_volume_down (
+        .clk(clk),
+        .rst_n(rst_n),
+        .key_state(volume_down_key_state),
+        .key_pressed(volume_down_single_pressed),
+        .repeat_pressed(volume_down_pressed)
+    );
+
+    key_repeat #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ)
+    ) u_repeat_volume_up (
+        .clk(clk),
+        .rst_n(rst_n),
+        .key_state(volume_up_key_state),
+        .key_pressed(volume_up_single_pressed),
+        .repeat_pressed(volume_up_pressed)
     );
 
     button_debounce #(

@@ -30,6 +30,10 @@ module tb_music_top;
     wire pm_playing;
     wire pm_paused;
     wire pm_stopped;
+    reg repeat_key_state;
+    reg repeat_key_pressed;
+    wire repeat_key_pulse;
+    integer repeat_pulses;
 
     music_top #(
         .CLK_FREQ_HZ(10_000),
@@ -79,8 +83,26 @@ module tb_music_top;
         .stopped(pm_stopped)
     );
 
+    key_repeat #(
+        .CLK_FREQ_HZ(1000),
+        .INITIAL_DELAY_MS(4),
+        .REPEAT_MS(2),
+        .FAST_DELAY_MS(8),
+        .FAST_REPEAT_MS(1)
+    ) u_key_repeat_check (
+        .clk(clk),
+        .rst_n(rst_n),
+        .key_state(repeat_key_state),
+        .key_pressed(repeat_key_pressed),
+        .repeat_pressed(repeat_key_pulse)
+    );
+
     always #5000 clk = ~clk;
     always @(posedge beep) beep_edges = beep_edges + 1;
+    always @(posedge clk) begin
+        if (repeat_key_pulse)
+            repeat_pulses = repeat_pulses + 1;
+    end
 
     task press_play_pause;
         begin
@@ -169,6 +191,16 @@ module tb_music_top;
         end
     endtask
 
+    task pulse_repeat_key;
+        begin
+            @(negedge clk);
+            repeat_key_state = 1'b1;
+            repeat_key_pressed = 1'b1;
+            @(negedge clk);
+            repeat_key_pressed = 1'b0;
+        end
+    endtask
+
     task wait_for_scan_digit;
         input [2:0] logical_digit;
         begin
@@ -208,12 +240,24 @@ module tb_music_top;
         pm_auto_song_changed = 1'b0;
         pm_note_done = 1'b0;
         pm_playback_mode = 2'd0;
+        repeat_key_state = 1'b0;
+        repeat_key_pressed = 1'b0;
+        repeat_pulses = 0;
         errors         = 0;
         beep_edges     = 0;
 
         repeat (10) @(posedge clk);
         rst_n = 1'b1;
         repeat (10) @(posedge clk);
+
+        pulse_repeat_key;
+        repeat (12) @(posedge clk);
+        repeat_key_state = 1'b0;
+        repeat (2) @(posedge clk);
+        if (repeat_pulses < 6) begin
+            $display("ERROR: key repeat did not emit enough long-press pulses");
+            errors = errors + 1;
+        end
 
         pulse_pm_play_pause;
         if (!pm_playing) begin
