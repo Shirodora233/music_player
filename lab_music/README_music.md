@@ -123,6 +123,33 @@ counts elapsed sixteenth-note units and elapsed seconds while playback is
 running; those counters feed the LED progress bar and seven-segment time
 display.
 
+## Score conversion tool
+
+`tools/score_to_song_rom.py` converts a Standard MIDI file or a simple text
+score into a `song_rom` metadata and `case (note_index)` snippet. It does not
+edit `song_rom.v` automatically; review the generated spelling and paste the
+block into the desired song branch.
+
+Example:
+
+```powershell
+python tools\score_to_song_rom.py song.mid --song-index 3 --output tmp\song3_rom.vh
+```
+
+Text score format:
+
+```text
+# title: Example
+# bpm: 120
+# time: 4/4
+# key: C major
+C4:4 D4:4 E4:4 R:4 F#4:8 Bb4:8
+```
+
+Durations are encoded in sixteenth-note units. Accidentals are kept in the note
+spelling, so `C#4:4` and `Db4:4` can display differently even though they sound
+at the same semitone.
+
 The pin assignments are stored in `lab_music.srcs/constrs_1/new/music.xdc`.
 They are based on `xc7k325t-V2.1-out.pdf` and the supplied board photo. The
 buzzer constraint is:
