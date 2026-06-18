@@ -64,8 +64,11 @@ module music_top #(
     wire playing;
     wire paused;
     wire stopped;
-    wire [1:0] edit_mode;
+    wire [2:0] edit_mode;
     wire [2:0] volume_level;
+    wire [1:0] playback_mode;
+    wire auto_song_changed;
+    wire auto_next_song;
     wire [7:0] led_row0;
     wire [7:0] led_row1;
     wire [7:0] led_row2;
@@ -189,13 +192,16 @@ module music_top #(
         .next_pressed(next_pressed),
         .value_down_pressed(volume_down_pressed),
         .value_up_pressed(volume_up_pressed),
+        .auto_next_song(auto_next_song),
         .default_bpm(default_bpm),
         .selected_song(selected_song),
         .transpose_semitones(transpose_semitones),
         .current_bpm(current_bpm),
         .volume_level(volume_level),
+        .playback_mode(playback_mode),
         .edit_mode(edit_mode),
-        .song_changed(song_changed)
+        .song_changed(song_changed),
+        .auto_song_changed(auto_song_changed)
     );
 
     player_controller u_player (
@@ -204,8 +210,10 @@ module music_top #(
         .play_pause_pressed(play_pressed),
         .stop_pressed(stop_pressed),
         .song_changed(song_changed),
+        .auto_song_changed(auto_song_changed),
         .note_done(note_done),
         .song_length(song_length),
+        .playback_mode(playback_mode),
         .note_index(note_index),
         .playing(playing),
         .paused(paused),
@@ -229,7 +237,9 @@ module music_top #(
     assign duration_16th = note_word[5:0];
     assign song_wrap = note_done &&
                        ((song_length == 0) || (note_index >= song_length - 1'b1));
-    assign playback_timing_clear = stopped || stop_pressed || song_changed || song_wrap;
+    assign auto_next_song = song_wrap && (playback_mode == 2'd2);
+    assign playback_timing_clear =
+        stopped || stop_pressed || song_changed || auto_song_changed || song_wrap;
 
     pitch_processor u_pitch_processor (
         .transpose_semitones(transpose_semitones),
@@ -354,6 +364,7 @@ module music_top #(
         .transpose_semitones(transpose_semitones),
         .bpm(current_bpm),
         .volume_level(volume_level),
+        .playback_mode(playback_mode),
         .playback_display_mode(playback_display_mode),
         .elapsed_seconds(elapsed_seconds),
         .remaining_seconds(remaining_seconds),

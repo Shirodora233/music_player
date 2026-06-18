@@ -61,7 +61,7 @@ physical two-digit module has its own A/B/C/D/E/F/G/DP segment bundle in
 
 | Digits | Display |
 | --- | --- |
-| Left four | Current selected parameter: `S001`, `t+00`, `t-12`, `b120`, or `U007` |
+| Left four | Current selected parameter: `S001`, `t+00`, `t-12`, `b120`, `U007`, `P-St`, `P-1L`, or `P-AL` |
 | Right four | KEY2-selected playback display; these four digits blink while paused |
 
 KEY2 cycles the right four digits through elapsed time `MM.SS`, remaining time
@@ -70,8 +70,8 @@ beat 1.
 
 ## Parameter controls
 
-`ui_controller` manages four editable parameters. `key_next` cycles through
-song, transpose, BPM, and volume. `key_volume_down` and `key_volume_up`
+`ui_controller` manages five editable parameters. `key_next` cycles through
+song, transpose, BPM, volume, and playback mode. `key_volume_down` and `key_volume_up`
 decrement or increment the selected parameter. If no parameter key is pressed
 for five seconds, the UI returns to the song display mode.
 
@@ -81,6 +81,7 @@ for five seconds, the UI returns to the song display mode.
 | Transpose | -12 to +12 semitones | Display spelling follows interval-based transposition |
 | BPM | 30 to 250 | Default starts at the song metadata BPM |
 | Volume | 0 to 7 | 0 mutes the buzzer; low nonzero levels use narrow duty cycles |
+| Playback mode | Stop, one-song loop, all-song loop | Left display shows `P-St`, `P-1L`, or `P-AL` |
 
 ## Built-in songs
 

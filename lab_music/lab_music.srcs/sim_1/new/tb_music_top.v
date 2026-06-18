@@ -20,6 +20,16 @@ module tb_music_top;
     integer errors;
     integer beep_edges;
     reg [7:0] paused_index;
+    reg pm_play_pause;
+    reg pm_stop;
+    reg pm_song_changed;
+    reg pm_auto_song_changed;
+    reg pm_note_done;
+    reg [1:0] pm_playback_mode;
+    wire [7:0] pm_note_index;
+    wire pm_playing;
+    wire pm_paused;
+    wire pm_stopped;
 
     music_top #(
         .CLK_FREQ_HZ(10_000),
@@ -51,6 +61,22 @@ module tb_music_top;
         .blank(8'b0000_0000),
         .seg(scan_order_seg),
         .seg_cs(scan_order_cs)
+    );
+
+    player_controller u_player_mode_check (
+        .clk(clk),
+        .rst_n(rst_n),
+        .play_pause_pressed(pm_play_pause),
+        .stop_pressed(pm_stop),
+        .song_changed(pm_song_changed),
+        .auto_song_changed(pm_auto_song_changed),
+        .note_done(pm_note_done),
+        .song_length(8'd2),
+        .playback_mode(pm_playback_mode),
+        .note_index(pm_note_index),
+        .playing(pm_playing),
+        .paused(pm_paused),
+        .stopped(pm_stopped)
     );
 
     always #5000 clk = ~clk;
@@ -110,6 +136,39 @@ module tb_music_top;
         end
     endtask
 
+    task pulse_pm_play_pause;
+        begin
+            @(negedge clk);
+            pm_play_pause = 1'b1;
+            @(negedge clk);
+            pm_play_pause = 1'b0;
+            @(posedge clk);
+            #1;
+        end
+    endtask
+
+    task pulse_pm_note_done;
+        begin
+            @(negedge clk);
+            pm_note_done = 1'b1;
+            @(negedge clk);
+            pm_note_done = 1'b0;
+            @(posedge clk);
+            #1;
+        end
+    endtask
+
+    task pulse_pm_auto_song_changed;
+        begin
+            @(negedge clk);
+            pm_auto_song_changed = 1'b1;
+            @(negedge clk);
+            pm_auto_song_changed = 1'b0;
+            @(posedge clk);
+            #1;
+        end
+    endtask
+
     task wait_for_scan_digit;
         input [2:0] logical_digit;
         begin
@@ -143,12 +202,52 @@ module tb_music_top;
         key_volume_down = 1'b1;
         key_volume_up   = 1'b1;
         key_display_mode = 1'b1;
+        pm_play_pause = 1'b0;
+        pm_stop = 1'b0;
+        pm_song_changed = 1'b0;
+        pm_auto_song_changed = 1'b0;
+        pm_note_done = 1'b0;
+        pm_playback_mode = 2'd0;
         errors         = 0;
         beep_edges     = 0;
 
         repeat (10) @(posedge clk);
         rst_n = 1'b1;
         repeat (10) @(posedge clk);
+
+        pulse_pm_play_pause;
+        if (!pm_playing) begin
+            $display("ERROR: player mode check did not enter playing state");
+            errors = errors + 1;
+        end
+
+        pulse_pm_note_done;
+        if (pm_note_index != 8'd1) begin
+            $display("ERROR: player mode check did not advance to note 1");
+            errors = errors + 1;
+        end
+
+        pulse_pm_note_done;
+        if (!pm_stopped || (pm_note_index != 8'd0)) begin
+            $display("ERROR: stop playback mode did not stop at song end");
+            errors = errors + 1;
+        end
+
+        pm_playback_mode = 2'd1;
+        pulse_pm_play_pause;
+        pulse_pm_note_done;
+        pulse_pm_note_done;
+        if (!pm_playing || (pm_note_index != 8'd0)) begin
+            $display("ERROR: one-song loop mode did not keep playing at song end");
+            errors = errors + 1;
+        end
+
+        pm_playback_mode = 2'd2;
+        pulse_pm_auto_song_changed;
+        if (!pm_playing || (pm_note_index != 8'd0)) begin
+            $display("ERROR: all-song loop auto change did not keep player running");
+            errors = errors + 1;
+        end
 
         if ((dut.semitone_pitch != 8'd60) ||
             (dut.display_note_name != 3'd0) ||
@@ -401,7 +500,40 @@ module tb_music_top;
         end
 
         press_next;
-        if (dut.edit_mode != 2'd0) begin
+        if ((dut.edit_mode != 3'd4) ||
+            (dut.playback_mode != 2'd0) ||
+            (dut.sevenseg_glyphs[39:20] != {5'd17, 5'd11, 5'd12, 5'd13})) begin
+            $display("ERROR: next key did not select stop playback mode");
+            errors = errors + 1;
+        end
+
+        press_volume_up;
+        repeat (10) @(posedge clk);
+        if ((dut.playback_mode != 2'd1) ||
+            (dut.sevenseg_glyphs[39:20] != {5'd17, 5'd11, 5'd1, 5'd19})) begin
+            $display("ERROR: playback mode increment did not show P-1L");
+            errors = errors + 1;
+        end
+
+        press_volume_up;
+        repeat (10) @(posedge clk);
+        if ((dut.playback_mode != 2'd2) ||
+            (dut.sevenseg_glyphs[39:20] != {5'd17, 5'd11, 5'd18, 5'd19})) begin
+            $display("ERROR: playback mode increment did not show P-AL");
+            errors = errors + 1;
+        end
+
+        press_volume_down;
+        repeat (10) @(posedge clk);
+        press_volume_down;
+        repeat (10) @(posedge clk);
+        if (dut.playback_mode != 2'd0) begin
+            $display("ERROR: playback mode decrement did not return to stop mode");
+            errors = errors + 1;
+        end
+
+        press_next;
+        if (dut.edit_mode != 3'd0) begin
             $display("ERROR: next key did not return to song edit mode");
             errors = errors + 1;
         end

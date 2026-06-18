@@ -6,8 +6,10 @@ module player_controller (
     input  wire       play_pause_pressed,
     input  wire       stop_pressed,
     input  wire       song_changed,
+    input  wire       auto_song_changed,
     input  wire       note_done,
     input  wire [7:0] song_length,
+    input  wire [1:0] playback_mode,
     output reg  [7:0] note_index,
     output wire       playing,
     output wire       paused,
@@ -17,6 +19,8 @@ module player_controller (
     localparam [1:0] STATE_STOPPED = 2'd0;
     localparam [1:0] STATE_PLAYING = 2'd1;
     localparam [1:0] STATE_PAUSED  = 2'd2;
+
+    localparam [1:0] PLAY_MODE_STOP = 2'd0;
 
     reg [1:0] state;
 
@@ -34,6 +38,9 @@ module player_controller (
         end else if (song_changed) begin
             state      <= STATE_STOPPED;
             note_index <= 8'd0;
+        end else if (auto_song_changed) begin
+            state      <= STATE_PLAYING;
+            note_index <= 8'd0;
         end else if (play_pause_pressed) begin
             case (state)
                 STATE_PLAYING: state <= STATE_PAUSED;
@@ -41,10 +48,13 @@ module player_controller (
                 default:       state <= STATE_PLAYING;
             endcase
         end else if (playing && note_done) begin
-            if ((song_length == 0) || (note_index >= song_length - 1'b1))
+            if ((song_length == 0) || (note_index >= song_length - 1'b1)) begin
                 note_index <= 8'd0;
-            else
+                if (playback_mode == PLAY_MODE_STOP)
+                    state <= STATE_STOPPED;
+            end else begin
                 note_index <= note_index + 1'b1;
+            end
         end
     end
 

@@ -5,11 +5,12 @@ module sevenseg_ui_formatter #(
 )(
     input  wire              clk,
     input  wire              rst_n,
-    input  wire [1:0]        edit_mode,
+    input  wire [2:0]        edit_mode,
     input  wire [7:0]        selected_song,
     input  wire signed [5:0] transpose_semitones,
     input  wire [7:0]        bpm,
     input  wire [2:0]        volume_level,
+    input  wire [1:0]        playback_mode,
     input  wire [1:0]        playback_display_mode,
     input  wire [15:0]       elapsed_seconds,
     input  wire [15:0]       remaining_seconds,
@@ -21,10 +22,14 @@ module sevenseg_ui_formatter #(
     output reg  [7:0]        blank
 );
 
-    localparam [1:0] EDIT_SONG      = 2'd0;
-    localparam [1:0] EDIT_TRANSPOSE = 2'd1;
-    localparam [1:0] EDIT_BPM       = 2'd2;
-    localparam [1:0] EDIT_VOLUME    = 2'd3;
+    localparam [2:0] EDIT_SONG      = 3'd0;
+    localparam [2:0] EDIT_TRANSPOSE = 3'd1;
+    localparam [2:0] EDIT_BPM       = 3'd2;
+    localparam [2:0] EDIT_VOLUME    = 3'd3;
+    localparam [2:0] EDIT_PLAY_MODE = 3'd4;
+    localparam [1:0] PLAY_MODE_STOP = 2'd0;
+    localparam [1:0] PLAY_MODE_ONE  = 2'd1;
+    localparam [1:0] PLAY_MODE_ALL  = 2'd2;
     localparam [1:0] DISPLAY_ELAPSED = 2'd0;
     localparam [1:0] DISPLAY_REMAIN  = 2'd1;
     localparam [1:0] DISPLAY_BAR     = 2'd2;
@@ -46,6 +51,9 @@ module sevenseg_ui_formatter #(
     localparam [4:0] GLYPH_B     = 5'd14;
     localparam [4:0] GLYPH_PLUS  = 5'd15;
     localparam [4:0] GLYPH_U     = 5'd16;
+    localparam [4:0] GLYPH_P     = 5'd17;
+    localparam [4:0] GLYPH_A     = 5'd18;
+    localparam [4:0] GLYPH_L     = 5'd19;
 
     localparam integer BLINK_TICKS_RAW = CLK_FREQ_HZ / 2;
     localparam integer BLINK_TICKS     = (BLINK_TICKS_RAW < 1) ? 1 : BLINK_TICKS_RAW;
@@ -161,6 +169,24 @@ module sevenseg_ui_formatter #(
                 glyph_d6 = GLYPH_0;
                 glyph_d5 = GLYPH_0;
                 glyph_d4 = digit_to_glyph({1'b0, volume_level});
+            end
+            EDIT_PLAY_MODE: begin
+                glyph_d7 = GLYPH_P;
+                glyph_d6 = GLYPH_MINUS;
+                case (playback_mode)
+                    PLAY_MODE_ONE: begin
+                        glyph_d5 = GLYPH_1;
+                        glyph_d4 = GLYPH_L;
+                    end
+                    PLAY_MODE_ALL: begin
+                        glyph_d5 = GLYPH_A;
+                        glyph_d4 = GLYPH_L;
+                    end
+                    default: begin
+                        glyph_d5 = GLYPH_S;
+                        glyph_d4 = GLYPH_T;
+                    end
+                endcase
             end
             EDIT_SONG: begin
                 glyph_d7 = GLYPH_S;
