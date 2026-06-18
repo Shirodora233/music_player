@@ -9,6 +9,7 @@ module tb_music_top;
     reg key_next;
     reg key_volume_down;
     reg key_volume_up;
+    reg key_display_mode;
     wire beep;
     wire [31:0] led;
     wire [31:0] seg;
@@ -33,6 +34,7 @@ module tb_music_top;
         .key_next(key_next),
         .key_volume_down(key_volume_down),
         .key_volume_up(key_volume_up),
+        .key_display_mode(key_display_mode),
         .beep(beep),
         .led(led),
         .seg(seg),
@@ -99,6 +101,15 @@ module tb_music_top;
         end
     endtask
 
+    task press_display_mode;
+        begin
+            key_display_mode = 1'b0;
+            repeat (130) @(posedge clk);
+            key_display_mode = 1'b1;
+            repeat (130) @(posedge clk);
+        end
+    endtask
+
     task wait_for_scan_digit;
         input [2:0] logical_digit;
         begin
@@ -131,6 +142,7 @@ module tb_music_top;
         key_next       = 1'b1;
         key_volume_down = 1'b1;
         key_volume_up   = 1'b1;
+        key_display_mode = 1'b1;
         errors         = 0;
         beep_edges     = 0;
 
@@ -175,6 +187,33 @@ module tb_music_top;
             (dut.sevenseg_decimal_points != 8'b0000_0100) ||
             (dut.sevenseg_blank != 8'b0000_0000)) begin
             $display("ERROR: seven-segment formatter did not show S001 and 00.00");
+            errors = errors + 1;
+        end
+
+        press_display_mode;
+        if ((dut.playback_display_mode != 2'd1) ||
+            (dut.remaining_seconds != 16'd24) ||
+            (dut.sevenseg_glyphs[19:0] != {5'd0, 5'd0, 5'd2, 5'd4}) ||
+            (dut.sevenseg_decimal_points != 8'b0000_0100)) begin
+            $display("ERROR: display mode did not show remaining time 00.24");
+            errors = errors + 1;
+        end
+
+        press_display_mode;
+        if ((dut.playback_display_mode != 2'd2) ||
+            (dut.current_bar_number != 10'd1) ||
+            (dut.current_beat_number != 3'd1) ||
+            (dut.sevenseg_glyphs[19:0] != {5'd0, 5'd0, 5'd1, 5'd1}) ||
+            (dut.sevenseg_decimal_points != 8'b0000_0010)) begin
+            $display("ERROR: display mode did not show bar position 001.1");
+            errors = errors + 1;
+        end
+
+        press_display_mode;
+        if ((dut.playback_display_mode != 2'd0) ||
+            (dut.sevenseg_glyphs[19:0] != {5'd0, 5'd0, 5'd0, 5'd0}) ||
+            (dut.sevenseg_decimal_points != 8'b0000_0100)) begin
+            $display("ERROR: display mode did not return to elapsed time 00.00");
             errors = errors + 1;
         end
 

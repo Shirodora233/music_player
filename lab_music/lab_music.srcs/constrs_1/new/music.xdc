@@ -32,6 +32,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports key_volume_down]
 set_property PACKAGE_PIN D14 [get_ports key_volume_up]
 set_property IOSTANDARD LVCMOS33 [get_ports key_volume_up]
 
+## Schematic KEY2: playback display mode select
+set_property PACKAGE_PIN C14 [get_ports key_display_mode]
+set_property IOSTANDARD LVCMOS33 [get_ports key_display_mode]
+
 ## Passive buzzer: BEEP / W19
 set_property PACKAGE_PIN W19 [get_ports beep]
 set_property IOSTANDARD LVCMOS33 [get_ports beep]

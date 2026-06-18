@@ -11,6 +11,7 @@
 | `key_next` | input | Cycle the selected editable parameter |
 | `key_volume_down` | input | Decrease the selected parameter |
 | `key_volume_up` | input | Increase the selected parameter |
+| `key_display_mode` | input | Cycle the right-side playback display mode |
 | `beep` | output | Passive buzzer output; board documentation specifies pin W19 |
 | `led[31:0]` | output | Board LED outputs; `board_led_mapper` maps logical rows to schematic LED nets |
 | `seg[31:0]` | output | Seven-segment A/B/C/D/E/F/G/DP lines for LED1 through LED4 |
@@ -18,7 +19,8 @@
 
 Buttons are active-low. On the supplied schematic, the current allocation is
 KEY8 reset, KEY7 play/pause, KEY6 stop, KEY5 parameter select, KEY4 value down,
-and KEY3 value up. The design and XDC both use the board's 200 MHz clock.
+KEY3 value up, and KEY2 playback display mode. The design and XDC both use the
+board's 200 MHz clock.
 
 ## Board pin allocation
 
@@ -31,6 +33,7 @@ and KEY3 value up. The design and XDC both use the board's 200 MHz clock.
 | `key_next` | KEY5 | B13 | Low |
 | `key_volume_down` | KEY4 | A13 | Low |
 | `key_volume_up` | KEY3 | D14 | Low |
+| `key_display_mode` | KEY2 | C14 | Low |
 | `beep` | BEEP | W19 | Square-wave output |
 | `led[0]` ... `led[31]` | LED1 ... LED32 | see XDC | High |
 | `seg[0]` ... `seg[31]` | LED1 ... LED4 segment pins | see XDC | High |
@@ -59,7 +62,11 @@ physical two-digit module has its own A/B/C/D/E/F/G/DP segment bundle in
 | Digits | Display |
 | --- | --- |
 | Left four | Current selected parameter: `S001`, `t+00`, `t-12`, `b120`, or `U007` |
-| Right four | Playback time as `MM.SS`; these four digits blink while paused |
+| Right four | KEY2-selected playback display; these four digits blink while paused |
+
+KEY2 cycles the right four digits through elapsed time `MM.SS`, remaining time
+`MM.SS`, and bar/beat position `BBB.P`. For example, `123.1` means bar 123,
+beat 1.
 
 ## Parameter controls
 

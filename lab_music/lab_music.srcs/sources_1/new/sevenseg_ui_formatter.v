@@ -10,7 +10,11 @@ module sevenseg_ui_formatter #(
     input  wire signed [5:0] transpose_semitones,
     input  wire [7:0]        bpm,
     input  wire [2:0]        volume_level,
+    input  wire [1:0]        playback_display_mode,
     input  wire [15:0]       elapsed_seconds,
+    input  wire [15:0]       remaining_seconds,
+    input  wire [9:0]        bar_number,
+    input  wire [2:0]        beat_number,
     input  wire              paused,
     output reg  [39:0]       glyphs,
     output reg  [7:0]        decimal_points,
@@ -21,6 +25,9 @@ module sevenseg_ui_formatter #(
     localparam [1:0] EDIT_TRANSPOSE = 2'd1;
     localparam [1:0] EDIT_BPM       = 2'd2;
     localparam [1:0] EDIT_VOLUME    = 2'd3;
+    localparam [1:0] DISPLAY_ELAPSED = 2'd0;
+    localparam [1:0] DISPLAY_REMAIN  = 2'd1;
+    localparam [1:0] DISPLAY_BAR     = 2'd2;
 
     localparam [4:0] GLYPH_0     = 5'd0;
     localparam [4:0] GLYPH_1     = 5'd1;
@@ -57,7 +64,10 @@ module sevenseg_ui_formatter #(
     reg [5:0]  transpose_abs;
     reg [7:0]  display_minutes;
     reg [5:0]  display_seconds;
-    reg [15:0] clamped_elapsed_seconds;
+    reg [15:0] display_time_seconds;
+    reg [15:0] clamped_display_seconds;
+    reg [9:0]  clamped_bar_number;
+    reg [2:0]  clamped_beat_number;
 
     function [4:0] digit_to_glyph;
         input [3:0] digit;
@@ -101,18 +111,37 @@ module sevenseg_ui_formatter #(
         else
             transpose_abs = transpose_semitones;
 
-        if (elapsed_seconds > 16'd5999)
-            clamped_elapsed_seconds = 16'd5999;
+        display_time_seconds =
+            (playback_display_mode == DISPLAY_REMAIN) ?
+            remaining_seconds : elapsed_seconds;
+
+        if (display_time_seconds > 16'd5999)
+            clamped_display_seconds = 16'd5999;
         else
-            clamped_elapsed_seconds = elapsed_seconds;
+            clamped_display_seconds = display_time_seconds;
 
-        display_minutes = clamped_elapsed_seconds / 16'd60;
-        display_seconds = clamped_elapsed_seconds % 16'd60;
+        display_minutes = clamped_display_seconds / 16'd60;
+        display_seconds = clamped_display_seconds % 16'd60;
 
-        glyph_d3 = digit_to_glyph(display_minutes / 8'd10);
-        glyph_d2 = digit_to_glyph(display_minutes % 8'd10);
-        glyph_d1 = digit_to_glyph(display_seconds / 6'd10);
-        glyph_d0 = digit_to_glyph(display_seconds % 6'd10);
+        clamped_bar_number = (bar_number > 10'd999) ? 10'd999 : bar_number;
+        if (beat_number < 3'd1)
+            clamped_beat_number = 3'd1;
+        else if (beat_number > 3'd4)
+            clamped_beat_number = 3'd4;
+        else
+            clamped_beat_number = beat_number;
+
+        if (playback_display_mode == DISPLAY_BAR) begin
+            glyph_d3 = digit_to_glyph(clamped_bar_number / 10'd100);
+            glyph_d2 = digit_to_glyph((clamped_bar_number / 10'd10) % 10'd10);
+            glyph_d1 = digit_to_glyph(clamped_bar_number % 10'd10);
+            glyph_d0 = digit_to_glyph(clamped_beat_number);
+        end else begin
+            glyph_d3 = digit_to_glyph(display_minutes / 8'd10);
+            glyph_d2 = digit_to_glyph(display_minutes % 8'd10);
+            glyph_d1 = digit_to_glyph(display_seconds / 6'd10);
+            glyph_d0 = digit_to_glyph(display_seconds % 6'd10);
+        end
 
         case (edit_mode)
             EDIT_TRANSPOSE: begin
@@ -149,7 +178,8 @@ module sevenseg_ui_formatter #(
 
         glyphs = {glyph_d7, glyph_d6, glyph_d5, glyph_d4,
                   glyph_d3, glyph_d2, glyph_d1, glyph_d0};
-        decimal_points = 8'b0000_0100;
+        decimal_points = (playback_display_mode == DISPLAY_BAR) ?
+                         8'b0000_0010 : 8'b0000_0100;
         blank = paused && !blink_visible ? 8'b0000_1111 : 8'b0000_0000;
     end
 

@@ -13,6 +13,7 @@ module music_top #(
     input  wire       key_next,
     input  wire       key_volume_down,
     input  wire       key_volume_up,
+    input  wire       key_display_mode,
     output wire        beep,
     output wire [31:0] led,
     output wire [31:0] seg,
@@ -24,11 +25,13 @@ module music_top #(
     wire next_key_level;
     wire volume_down_key_level;
     wire volume_up_key_level;
+    wire display_mode_key_level;
     wire play_pressed;
     wire stop_pressed;
     wire next_pressed;
     wire volume_down_pressed;
     wire volume_up_pressed;
+    wire display_mode_pressed;
 
     wire [1:0] selected_song;
     wire song_changed;
@@ -71,12 +74,22 @@ module music_top #(
     wire [39:0] sevenseg_glyphs;
     wire [7:0] sevenseg_decimal_points;
     wire [7:0] sevenseg_blank;
+    wire [7:0] safe_bpm;
+    wire [31:0] total_seconds_numerator;
+    wire [15:0] total_duration_seconds;
+    wire [15:0] remaining_seconds;
+    wire [2:0] current_beat_number;
     reg [15:0] elapsed_16th_units;
     reg [15:0] elapsed_seconds;
     reg [31:0] second_tick_count;
     reg [1:0] beat_in_bar;
+    reg [9:0] current_bar_number;
+    reg [1:0] playback_display_mode;
 
     localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
+    localparam [1:0] DISPLAY_ELAPSED = 2'd0;
+    localparam [1:0] DISPLAY_REMAIN  = 2'd1;
+    localparam [1:0] DISPLAY_BAR     = 2'd2;
 
     assign selected_song_index = {6'd0, selected_song};
     assign safe_beats_per_bar =
@@ -85,12 +98,21 @@ module music_top #(
     assign safe_first_beat_in_bar =
         ({1'b0, first_beat_in_bar} < safe_beats_per_bar) ?
         first_beat_in_bar : 2'd0;
+    assign safe_bpm = (current_bpm == 0) ? 8'd120 : current_bpm;
+    assign total_seconds_numerator =
+        ({16'd0, total_duration_16th} * 32'd15) + {24'd0, safe_bpm} - 32'd1;
+    assign total_duration_seconds = total_seconds_numerator / safe_bpm;
+    assign remaining_seconds =
+        (total_duration_seconds > elapsed_seconds) ?
+        (total_duration_seconds - elapsed_seconds) : 16'd0;
+    assign current_beat_number = {1'b0, beat_in_bar} + 3'd1;
 
     assign play_key_level = KEY_ACTIVE_LOW ? ~key_play_pause : key_play_pause;
     assign stop_key_level = KEY_ACTIVE_LOW ? ~key_stop       : key_stop;
     assign next_key_level = KEY_ACTIVE_LOW ? ~key_next       : key_next;
     assign volume_down_key_level = KEY_ACTIVE_LOW ? ~key_volume_down : key_volume_down;
     assign volume_up_key_level   = KEY_ACTIVE_LOW ? ~key_volume_up   : key_volume_up;
+    assign display_mode_key_level = KEY_ACTIVE_LOW ? ~key_display_mode : key_display_mode;
 
     button_debounce #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ),
@@ -145,6 +167,17 @@ module music_top #(
         .key_in(volume_up_key_level),
         .key_state(),
         .key_pressed(volume_up_pressed)
+    );
+
+    button_debounce #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ),
+        .DEBOUNCE_MS(DEBOUNCE_MS)
+    ) u_debounce_display_mode (
+        .clk(clk),
+        .rst_n(rst_n),
+        .key_in(display_mode_key_level),
+        .key_state(),
+        .key_pressed(display_mode_pressed)
     );
 
     ui_controller #(
@@ -230,20 +263,25 @@ module music_top #(
             elapsed_seconds    <= 16'd0;
             second_tick_count  <= 32'd0;
             beat_in_bar        <= 2'd0;
+            current_bar_number <= 10'd1;
         end else if (playback_timing_clear) begin
             elapsed_16th_units <= 16'd0;
             elapsed_seconds    <= 16'd0;
             second_tick_count  <= 32'd0;
             beat_in_bar        <= safe_first_beat_in_bar;
+            current_bar_number <= 10'd1;
         end else if (playing) begin
             if (sixteenth_pulse && (elapsed_16th_units < total_duration_16th))
                 elapsed_16th_units <= elapsed_16th_units + 1'b1;
 
             if (beat_pulse) begin
-                if ({1'b0, beat_in_bar} >= (safe_beats_per_bar - 1'b1))
+                if ({1'b0, beat_in_bar} >= (safe_beats_per_bar - 1'b1)) begin
                     beat_in_bar <= 2'd0;
-                else
+                    if (current_bar_number < 10'd999)
+                        current_bar_number <= current_bar_number + 1'b1;
+                end else begin
                     beat_in_bar <= beat_in_bar + 1'b1;
+                end
             end
 
             if ((SECOND_TICKS <= 1) || (second_tick_count >= SECOND_TICKS - 1)) begin
@@ -252,6 +290,18 @@ module music_top #(
             end else begin
                 second_tick_count <= second_tick_count + 1'b1;
             end
+        end
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            playback_display_mode <= DISPLAY_ELAPSED;
+        end else if (display_mode_pressed) begin
+            case (playback_display_mode)
+                DISPLAY_ELAPSED: playback_display_mode <= DISPLAY_REMAIN;
+                DISPLAY_REMAIN:  playback_display_mode <= DISPLAY_BAR;
+                default:         playback_display_mode <= DISPLAY_ELAPSED;
+            endcase
         end
     end
 
@@ -304,7 +354,11 @@ module music_top #(
         .transpose_semitones(transpose_semitones),
         .bpm(current_bpm),
         .volume_level(volume_level),
+        .playback_display_mode(playback_display_mode),
         .elapsed_seconds(elapsed_seconds),
+        .remaining_seconds(remaining_seconds),
+        .bar_number(current_bar_number),
+        .beat_number(current_beat_number),
         .paused(paused),
         .glyphs(sevenseg_glyphs),
         .decimal_points(sevenseg_decimal_points),
