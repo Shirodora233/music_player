@@ -13,6 +13,8 @@ module tb_music_top;
     wire [31:0] led;
     wire [31:0] seg;
     wire [7:0] seg_cs;
+    wire [31:0] scan_order_seg;
+    wire [7:0] scan_order_cs;
 
     integer errors;
     integer beep_edges;
@@ -35,6 +37,18 @@ module tb_music_top;
         .led(led),
         .seg(seg),
         .seg_cs(seg_cs)
+    );
+
+    sevenseg_scan_controller #(
+        .CLK_FREQ_HZ(10_000)
+    ) u_scan_order_check (
+        .clk(clk),
+        .rst_n(rst_n),
+        .glyphs({5'd12, 5'd0, 5'd0, 5'd1, 5'd0, 5'd1, 5'd1, 5'd2}),
+        .decimal_points(8'b0000_0100),
+        .blank(8'b0000_0000),
+        .seg(scan_order_seg),
+        .seg_cs(scan_order_cs)
     );
 
     always #5000 clk = ~clk;
@@ -91,6 +105,18 @@ module tb_music_top;
             @(posedge clk);
             #1;
             while (dut.u_sevenseg_scan.active_digit != logical_digit) begin
+                @(posedge clk);
+                #1;
+            end
+        end
+    endtask
+
+    task wait_for_order_scan_digit;
+        input [2:0] logical_digit;
+        begin
+            @(posedge clk);
+            #1;
+            while (u_scan_order_check.active_digit != logical_digit) begin
                 @(posedge clk);
                 #1;
             end
@@ -161,10 +187,34 @@ module tb_music_top;
         end
 
         wait_for_scan_digit(3'd0);
-        if ((seg_cs != 8'b0111_1111) || (seg[7:0] != 8'h3f)) begin
+        if ((seg_cs != 8'b1011_1111) || (seg[7:0] != 8'h3f)) begin
             $display("ERROR: seven-segment scanner did not map logical right digit to physical right digit cs=%b seg7_0=%h active=%0d physical=%0d glyph=%0d",
                      seg_cs, seg[7:0], dut.u_sevenseg_scan.active_digit,
                      dut.u_sevenseg_scan.physical_digit, dut.u_sevenseg_scan.active_glyph);
+            errors = errors + 1;
+        end
+
+        wait_for_order_scan_digit(3'd3);
+        if ((scan_order_cs != 8'b1101_1111) || (scan_order_seg[15:8] != 8'h3f)) begin
+            $display("ERROR: scan order did not put minute tens in the left minute digit");
+            errors = errors + 1;
+        end
+
+        wait_for_order_scan_digit(3'd2);
+        if ((scan_order_cs != 8'b1110_1111) || (scan_order_seg[15:8] != 8'h86)) begin
+            $display("ERROR: scan order did not put minute ones in the right minute digit");
+            errors = errors + 1;
+        end
+
+        wait_for_order_scan_digit(3'd1);
+        if ((scan_order_cs != 8'b0111_1111) || (scan_order_seg[7:0] != 8'h06)) begin
+            $display("ERROR: scan order did not put second tens in the left second digit");
+            errors = errors + 1;
+        end
+
+        wait_for_order_scan_digit(3'd0);
+        if ((scan_order_cs != 8'b1011_1111) || (scan_order_seg[7:0] != 8'h5b)) begin
+            $display("ERROR: scan order did not put second ones in the right second digit");
             errors = errors + 1;
         end
 

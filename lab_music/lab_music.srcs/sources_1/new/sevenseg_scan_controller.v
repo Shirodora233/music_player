@@ -70,6 +70,23 @@ module sevenseg_scan_controller #(
         end
     endfunction
 
+    function [2:0] map_digit_to_board;
+        input [2:0] logical_digit;
+        begin
+            case (logical_digit)
+                3'd7: map_digit_to_board = 3'd0;
+                3'd6: map_digit_to_board = 3'd1;
+                3'd5: map_digit_to_board = 3'd2;
+                3'd4: map_digit_to_board = 3'd3;
+                3'd3: map_digit_to_board = 3'd5;
+                3'd2: map_digit_to_board = 3'd4;
+                3'd1: map_digit_to_board = 3'd7;
+                3'd0: map_digit_to_board = 3'd6;
+                default: map_digit_to_board = 3'd0;
+            endcase
+        end
+    endfunction
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             scan_counter <= 32'd0;
@@ -95,7 +112,7 @@ module sevenseg_scan_controller #(
             default: active_glyph = GLYPH_BLANK;
         endcase
 
-        physical_digit = 3'd7 - active_digit;
+        physical_digit = map_digit_to_board(active_digit);
 
         if (blank[active_digit]) begin
             raw_segments = 8'b0000_0000;
