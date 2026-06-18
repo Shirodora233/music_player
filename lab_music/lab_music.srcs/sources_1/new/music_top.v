@@ -4,6 +4,7 @@ module music_top #(
     parameter integer CLK_FREQ_HZ    = 200_000_000,
     parameter integer NOTE_GAP_MS    = 20,
     parameter integer DEBOUNCE_MS    = 20,
+    parameter integer SELF_TEST_LONG_PRESS_MS = 1000,
     parameter integer KEY_ACTIVE_LOW = 1
 )(
     input  wire       clk,
@@ -14,6 +15,7 @@ module music_top #(
     input  wire       key_volume_down,
     input  wire       key_volume_up,
     input  wire       key_display_mode,
+    input  wire       key_self_test,
     output wire        beep,
     output wire [31:0] led,
     output wire [31:0] seg,
@@ -26,6 +28,7 @@ module music_top #(
     wire volume_down_key_level;
     wire volume_up_key_level;
     wire display_mode_key_level;
+    wire self_test_key_level;
     wire play_pressed;
     wire stop_pressed;
     wire next_pressed;
@@ -36,6 +39,8 @@ module music_top #(
     wire volume_down_pressed;
     wire volume_up_pressed;
     wire display_mode_pressed;
+    wire self_test_key_state;
+    wire self_test_toggle_pulse;
 
     wire [1:0] selected_song;
     wire song_changed;
@@ -77,10 +82,20 @@ module music_top #(
     wire [7:0] led_row1;
     wire [7:0] led_row2;
     wire [7:0] led_row3;
+    wire [31:0] music_led;
+    wire [31:0] self_test_led;
     wire [7:0] selected_song_index;
     wire [39:0] sevenseg_glyphs;
     wire [7:0] sevenseg_decimal_points;
     wire [7:0] sevenseg_blank;
+    wire [39:0] self_test_glyphs;
+    wire [7:0] self_test_decimal_points;
+    wire [7:0] self_test_blank;
+    wire [39:0] active_sevenseg_glyphs;
+    wire [7:0] active_sevenseg_decimal_points;
+    wire [7:0] active_sevenseg_blank;
+    wire music_beep;
+    wire self_test_beep;
     wire [7:0] safe_bpm;
     wire [31:0] total_seconds_numerator;
     wire [15:0] total_duration_seconds;
@@ -92,6 +107,7 @@ module music_top #(
     reg [1:0] beat_in_bar;
     reg [9:0] current_bar_number;
     reg [1:0] playback_display_mode;
+    reg self_test_active;
 
     localparam [31:0] SECOND_TICKS = CLK_FREQ_HZ;
     localparam [1:0] DISPLAY_ELAPSED = 2'd0;
@@ -120,6 +136,15 @@ module music_top #(
     assign volume_down_key_level = KEY_ACTIVE_LOW ? ~key_volume_down : key_volume_down;
     assign volume_up_key_level   = KEY_ACTIVE_LOW ? ~key_volume_up   : key_volume_up;
     assign display_mode_key_level = KEY_ACTIVE_LOW ? ~key_display_mode : key_display_mode;
+    assign self_test_key_level = KEY_ACTIVE_LOW ? ~key_self_test : key_self_test;
+    assign led = self_test_active ? self_test_led : music_led;
+    assign beep = self_test_active ? self_test_beep : music_beep;
+    assign active_sevenseg_glyphs =
+        self_test_active ? self_test_glyphs : sevenseg_glyphs;
+    assign active_sevenseg_decimal_points =
+        self_test_active ? self_test_decimal_points : sevenseg_decimal_points;
+    assign active_sevenseg_blank =
+        self_test_active ? self_test_blank : sevenseg_blank;
 
     button_debounce #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ),
@@ -205,6 +230,27 @@ module music_top #(
         .key_in(display_mode_key_level),
         .key_state(),
         .key_pressed(display_mode_pressed)
+    );
+
+    button_debounce #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ),
+        .DEBOUNCE_MS(DEBOUNCE_MS)
+    ) u_debounce_self_test (
+        .clk(clk),
+        .rst_n(rst_n),
+        .key_in(self_test_key_level),
+        .key_state(self_test_key_state),
+        .key_pressed()
+    );
+
+    long_press_toggle #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ),
+        .LONG_PRESS_MS(SELF_TEST_LONG_PRESS_MS)
+    ) u_self_test_long_press (
+        .clk(clk),
+        .rst_n(rst_n),
+        .key_state(self_test_key_state),
+        .toggle_pulse(self_test_toggle_pulse)
     );
 
     ui_controller #(
@@ -339,6 +385,14 @@ module music_top #(
         end
     end
 
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            self_test_active <= 1'b0;
+        end else if (self_test_toggle_pulse) begin
+            self_test_active <= ~self_test_active;
+        end
+    end
+
     tone_generator #(
         .CLK_FREQ_HZ(CLK_FREQ_HZ)
     ) u_tone_generator (
@@ -348,7 +402,7 @@ module music_top #(
         .is_rest(note_is_rest),
         .semitone_pitch(semitone_pitch),
         .volume_level(volume_level),
-        .beep(beep)
+        .beep(music_beep)
     );
 
     led_panel_controller #(
@@ -375,7 +429,19 @@ module music_top #(
         .row1(led_row1),
         .row2(led_row2),
         .row3(led_row3),
-        .led(led)
+        .led(music_led)
+    );
+
+    self_test_controller #(
+        .CLK_FREQ_HZ(CLK_FREQ_HZ)
+    ) u_self_test_controller (
+        .clk(clk),
+        .rst_n(rst_n),
+        .led(self_test_led),
+        .glyphs(self_test_glyphs),
+        .decimal_points(self_test_decimal_points),
+        .blank(self_test_blank),
+        .beep(self_test_beep)
     );
 
     sevenseg_ui_formatter #(
@@ -405,9 +471,9 @@ module music_top #(
     ) u_sevenseg_scan (
         .clk(clk),
         .rst_n(rst_n),
-        .glyphs(sevenseg_glyphs),
-        .decimal_points(sevenseg_decimal_points),
-        .blank(sevenseg_blank),
+        .glyphs(active_sevenseg_glyphs),
+        .decimal_points(active_sevenseg_decimal_points),
+        .blank(active_sevenseg_blank),
         .seg(seg),
         .seg_cs(seg_cs)
     );

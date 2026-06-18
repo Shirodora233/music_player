@@ -36,6 +36,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports key_volume_up]
 set_property PACKAGE_PIN C14 [get_ports key_display_mode]
 set_property IOSTANDARD LVCMOS33 [get_ports key_display_mode]
 
+## Schematic KEY1: self-test mode toggle by long press
+set_property PACKAGE_PIN E15 [get_ports key_self_test]
+set_property IOSTANDARD LVCMOS33 [get_ports key_self_test]
+
 ## Passive buzzer: BEEP / W19
 set_property PACKAGE_PIN W19 [get_ports beep]
 set_property IOSTANDARD LVCMOS33 [get_ports beep]

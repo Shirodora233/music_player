@@ -10,6 +10,7 @@ module tb_music_top;
     reg key_volume_down;
     reg key_volume_up;
     reg key_display_mode;
+    reg key_self_test;
     wire beep;
     wire [31:0] led;
     wire [31:0] seg;
@@ -39,6 +40,7 @@ module tb_music_top;
         .CLK_FREQ_HZ(10_000),
         .NOTE_GAP_MS(1),
         .DEBOUNCE_MS(1),
+        .SELF_TEST_LONG_PRESS_MS(5),
         .KEY_ACTIVE_LOW(1)
     ) dut (
         .clk(clk),
@@ -49,6 +51,7 @@ module tb_music_top;
         .key_volume_down(key_volume_down),
         .key_volume_up(key_volume_up),
         .key_display_mode(key_display_mode),
+        .key_self_test(key_self_test),
         .beep(beep),
         .led(led),
         .seg(seg),
@@ -158,6 +161,15 @@ module tb_music_top;
         end
     endtask
 
+    task hold_self_test;
+        begin
+            key_self_test = 1'b0;
+            repeat (90) @(posedge clk);
+            key_self_test = 1'b1;
+            repeat (30) @(posedge clk);
+        end
+    endtask
+
     task pulse_pm_play_pause;
         begin
             @(negedge clk);
@@ -234,6 +246,7 @@ module tb_music_top;
         key_volume_down = 1'b1;
         key_volume_up   = 1'b1;
         key_display_mode = 1'b1;
+        key_self_test = 1'b1;
         pm_play_pause = 1'b0;
         pm_stop = 1'b0;
         pm_song_changed = 1'b0;
@@ -332,6 +345,23 @@ module tb_music_top;
             $display("ERROR: seven-segment formatter did not show S001 and 00.00");
             errors = errors + 1;
         end
+
+        hold_self_test;
+        if (!dut.self_test_active ||
+            (dut.active_sevenseg_glyphs != {5'd0, 5'd1, 5'd2, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7}) ||
+            (dut.active_sevenseg_decimal_points != 8'b0000_0000) ||
+            (dut.active_sevenseg_blank != 8'b0000_0000) ||
+            (led == 32'd0)) begin
+            $display("ERROR: self-test mode did not override board outputs");
+            errors = errors + 1;
+        end
+
+        hold_self_test;
+        if (dut.self_test_active) begin
+            $display("ERROR: self-test mode did not exit after second long press");
+            errors = errors + 1;
+        end
+        beep_edges = 0;
 
         press_display_mode;
         if ((dut.playback_display_mode != 2'd1) ||
