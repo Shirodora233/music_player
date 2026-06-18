@@ -38,6 +38,7 @@ module sevenseg_scan_controller #(
 
     reg [31:0] scan_counter;
     reg [2:0]  active_digit;
+    reg [2:0]  physical_digit;
     reg [4:0]  active_glyph;
     reg [7:0]  raw_segments;
     reg [7:0]  driven_segments;
@@ -94,6 +95,8 @@ module sevenseg_scan_controller #(
             default: active_glyph = GLYPH_BLANK;
         endcase
 
+        physical_digit = 3'd7 - active_digit;
+
         if (blank[active_digit]) begin
             raw_segments = 8'b0000_0000;
         end else begin
@@ -103,11 +106,11 @@ module sevenseg_scan_controller #(
         driven_segments = SEG_ACTIVE_HIGH ? raw_segments : ~raw_segments;
 
         raw_cs = 8'b0000_0000;
-        raw_cs[active_digit] = 1'b1;
+        raw_cs[physical_digit] = 1'b1;
         seg_cs = CS_ACTIVE_LOW ? ~raw_cs : raw_cs;
 
         seg = SEG_ACTIVE_HIGH ? 32'h0000_0000 : 32'hFFFF_FFFF;
-        case (active_digit)
+        case (physical_digit)
             3'd0,
             3'd1: seg[31:24] = driven_segments;
             3'd2,

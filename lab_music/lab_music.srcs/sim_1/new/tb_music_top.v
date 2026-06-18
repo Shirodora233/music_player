@@ -85,6 +85,18 @@ module tb_music_top;
         end
     endtask
 
+    task wait_for_scan_digit;
+        input [2:0] logical_digit;
+        begin
+            @(posedge clk);
+            #1;
+            while (dut.u_sevenseg_scan.active_digit != logical_digit) begin
+                @(posedge clk);
+                #1;
+            end
+        end
+    endtask
+
     initial begin
         clk            = 1'b0;
         rst_n          = 1'b0;
@@ -137,6 +149,22 @@ module tb_music_top;
             (dut.sevenseg_decimal_points != 8'b0000_0100) ||
             (dut.sevenseg_blank != 8'b0000_0000)) begin
             $display("ERROR: seven-segment formatter did not show S001 and 00.00");
+            errors = errors + 1;
+        end
+
+        wait_for_scan_digit(3'd7);
+        if ((seg_cs != 8'b1111_1110) || (seg[31:24] != 8'h6d)) begin
+            $display("ERROR: seven-segment scanner did not map logical left digit to physical left digit cs=%b seg31_24=%h active=%0d physical=%0d glyph=%0d",
+                     seg_cs, seg[31:24], dut.u_sevenseg_scan.active_digit,
+                     dut.u_sevenseg_scan.physical_digit, dut.u_sevenseg_scan.active_glyph);
+            errors = errors + 1;
+        end
+
+        wait_for_scan_digit(3'd0);
+        if ((seg_cs != 8'b0111_1111) || (seg[7:0] != 8'h3f)) begin
+            $display("ERROR: seven-segment scanner did not map logical right digit to physical right digit cs=%b seg7_0=%h active=%0d physical=%0d glyph=%0d",
+                     seg_cs, seg[7:0], dut.u_sevenseg_scan.active_digit,
+                     dut.u_sevenseg_scan.physical_digit, dut.u_sevenseg_scan.active_glyph);
             errors = errors + 1;
         end
 

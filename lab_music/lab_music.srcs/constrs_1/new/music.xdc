@@ -73,8 +73,9 @@ set_property PACKAGE_PIN G24 [get_ports {led[31]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {led[*]}]
 
 ## Seven-segment modules. Segment bit order inside each module is
-## A, B, C, D, E, F, G, DP. Logical digits are right-to-left:
-## seg_cs[0] is the rightmost digit and seg_cs[7] is the leftmost digit.
+## A, B, C, D, E, F, G, DP. Physical digit selects are left-to-right:
+## seg_cs[0] is the leftmost digit and seg_cs[7] is the rightmost digit.
+## sevenseg_scan_controller reverses logical digit order for display layout.
 set_property PACKAGE_PIN K14 [get_ports {seg[0]}]
 set_property PACKAGE_PIN L15 [get_ports {seg[1]}]
 set_property PACKAGE_PIN H16 [get_ports {seg[2]}]

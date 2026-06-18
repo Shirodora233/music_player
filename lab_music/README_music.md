@@ -48,10 +48,12 @@ the board photo. `led_panel_controller` drives the musical display and
 | Row 3 | Playback progress bar based on elapsed sixteenth-note units |
 
 The seven-segment display is formatted by `sevenseg_ui_formatter` and scanned by
-`sevenseg_scan_controller`. It scans the eight digits from right to left, with
-`seg_cs[0]` as the rightmost digit and `seg_cs[7]` as the leftmost digit. Each
-physical two-digit module has its own A/B/C/D/E/F/G/DP segment bundle in
-`seg[31:0]`.
+`sevenseg_scan_controller`. The formatter treats logical digit 7 as the
+leftmost position and logical digit 0 as the rightmost position. The board's
+physical select lines run the opposite way, with `seg_cs[0]` on the left and
+`seg_cs[7]` on the right, so the scanner reverses the logical digit index when
+driving the physical digit select and segment bundle. Each physical two-digit
+module has its own A/B/C/D/E/F/G/DP segment bundle in `seg[31:0]`.
 
 | Digits | Display |
 | --- | --- |
