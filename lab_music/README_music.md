@@ -95,7 +95,7 @@ song display mode.
 ## Built-in songs
 
 - Song 0: Twinkle Twinkle Little Star
-- Song 1: Two Tigers
+- Song 1: Old Memory MIDI melody
 - Song 2: Haruhikage MIDI melody
 
 ## Song encoding

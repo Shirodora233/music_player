@@ -6,6 +6,7 @@
 **/*.runs/
 **/*.sim/
 **/*.gen/
+**/xsim.dir/
 
 # Vivado generated files
 *.jou
@@ -30,6 +31,10 @@
 .docx_review/
 .tmp_docx/
 tmp/
+
+# Python tooling caches
+__pycache__/
+*.pyc
 
 # OS and editor noise
 .DS_Store

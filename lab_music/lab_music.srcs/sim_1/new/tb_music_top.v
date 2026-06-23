@@ -455,8 +455,18 @@ module tb_music_top;
 
         press_volume_up;
         repeat (10) @(posedge clk);
-        if ((dut.selected_song != 2'd1) || !dut.stopped || (dut.note_index != 0)) begin
-            $display("ERROR: song parameter increment did not select and stop at song 1");
+        if ((dut.selected_song != 2'd1) ||
+            !dut.stopped ||
+            (dut.note_index != 0) ||
+            (dut.song_length != 8'd189) ||
+            (dut.total_duration_16th != 16'd608) ||
+            (dut.current_bpm != 8'd85) ||
+            (dut.key_tonic != 3'd1) ||
+            (dut.semitone_pitch != 8'd86) ||
+            (dut.display_note_name != 3'd1) ||
+            (dut.display_accidental != 2'd1) ||
+            (dut.display_octave != 4'd6)) begin
+            $display("ERROR: song parameter increment did not select Old Memory metadata");
             errors = errors + 1;
         end
 
