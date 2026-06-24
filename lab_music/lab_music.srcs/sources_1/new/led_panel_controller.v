@@ -11,8 +11,8 @@ module led_panel_controller #(
     input  wire [3:0]  display_octave,
     input  wire [2:0]  beats_per_bar,
     input  wire [1:0]  beat_in_bar,
-    input  wire [15:0] elapsed_16th_units,
-    input  wire [15:0] total_duration_16th,
+    input  wire [15:0] elapsed_units,
+    input  wire [15:0] total_duration_units,
     output reg  [7:0]  row0,
     output reg  [7:0]  row1,
     output reg  [7:0]  row2,
@@ -23,8 +23,8 @@ module led_panel_controller #(
     localparam [1:0] ACC_NATURAL = 2'd1;
     localparam [1:0] ACC_SHARP   = 2'd2;
 
-    wire [31:0] progress_scaled = {13'd0, elapsed_16th_units, 3'd0};
-    wire [31:0] total_duration_ext = {16'd0, total_duration_16th};
+    wire [31:0] progress_scaled = {13'd0, elapsed_units, 3'd0};
+    wire [31:0] total_duration_ext = {16'd0, total_duration_units};
 
     always @(*) begin
         row0 = 8'b0000_0000;
@@ -68,21 +68,21 @@ module led_panel_controller #(
         endcase
     end
 
-    assign row3[0] = (total_duration_16th != 0) &&
+    assign row3[0] = (total_duration_units != 0) &&
                      (progress_scaled >= total_duration_ext);
-    assign row3[1] = (total_duration_16th != 0) &&
+    assign row3[1] = (total_duration_units != 0) &&
                      (progress_scaled >= (total_duration_ext << 1));
-    assign row3[2] = (total_duration_16th != 0) &&
+    assign row3[2] = (total_duration_units != 0) &&
                      (progress_scaled >= (total_duration_ext * 3));
-    assign row3[3] = (total_duration_16th != 0) &&
+    assign row3[3] = (total_duration_units != 0) &&
                      (progress_scaled >= (total_duration_ext << 2));
-    assign row3[4] = (total_duration_16th != 0) &&
+    assign row3[4] = (total_duration_units != 0) &&
                      (progress_scaled >= (total_duration_ext * 5));
-    assign row3[5] = (total_duration_16th != 0) &&
+    assign row3[5] = (total_duration_units != 0) &&
                      (progress_scaled >= (total_duration_ext * 6));
-    assign row3[6] = (total_duration_16th != 0) &&
+    assign row3[6] = (total_duration_units != 0) &&
                      (progress_scaled >= (total_duration_ext * 7));
-    assign row3[7] = (total_duration_16th != 0) &&
+    assign row3[7] = (total_duration_units != 0) &&
                      (progress_scaled >= (total_duration_ext << 3));
 
 endmodule

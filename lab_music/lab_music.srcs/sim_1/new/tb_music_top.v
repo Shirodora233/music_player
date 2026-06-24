@@ -306,19 +306,19 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        if ((dut.semitone_pitch != 8'd60) ||
-            (dut.display_note_name != 3'd0) ||
+        if ((dut.semitone_pitch != 8'd79) ||
+            (dut.display_note_name != 3'd4) ||
             (dut.display_accidental != 2'd1) ||
-            (dut.display_octave != 4'd4)) begin
-            $display("ERROR: initial pitch did not decode as natural C4");
+            (dut.display_octave != 4'd5)) begin
+            $display("ERROR: initial pitch did not decode as natural G5");
             errors = errors + 1;
         end
 
-        if ((dut.led_row0 != 8'b0000_0001) ||
-            (dut.led_row1 != 8'b0000_1000) ||
+        if ((dut.led_row0 != 8'b0001_0000) ||
+            (dut.led_row1 != 8'b0001_0000) ||
             (dut.led_row2[1:0] != 2'b00) ||
             (dut.led_row2[7:4] != 4'b0001)) begin
-            $display("ERROR: LED panel did not show natural C4");
+            $display("ERROR: LED panel did not show natural G5");
             errors = errors + 1;
         end
 
@@ -329,7 +329,7 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        if (dut.current_bpm != 8'd120) begin
+        if (dut.current_bpm != 8'd84) begin
             $display("ERROR: default BPM did not load from song metadata");
             errors = errors + 1;
         end
@@ -365,10 +365,10 @@ module tb_music_top;
 
         press_display_mode;
         if ((dut.playback_display_mode != 2'd1) ||
-            (dut.remaining_seconds != 16'd24) ||
-            (dut.sevenseg_glyphs[19:0] != {5'd0, 5'd0, 5'd2, 5'd4}) ||
+            (dut.remaining_seconds != 16'd75) ||
+            (dut.sevenseg_glyphs[19:0] != {5'd0, 5'd1, 5'd1, 5'd5}) ||
             (dut.sevenseg_decimal_points != 8'b0000_0100)) begin
-            $display("ERROR: display mode did not show remaining time 00.24");
+            $display("ERROR: display mode did not show remaining time 01.15");
             errors = errors + 1;
         end
 
@@ -442,7 +442,7 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        repeat (5200) @(posedge clk);
+        repeat (8000) @(posedge clk);
         if ((dut.beat_in_bar != 2'd1) || (dut.led_row2[7:4] != 4'b0010)) begin
             $display("ERROR: beat indicator did not advance to the second beat");
             errors = errors + 1;
@@ -459,9 +459,8 @@ module tb_music_top;
             !dut.stopped ||
             (dut.note_index != 0) ||
             (dut.song_length != 8'd189) ||
-            (dut.total_duration_16th != 16'd608) ||
+            (dut.total_duration_units != 16'd912) ||
             (dut.current_bpm != 8'd85) ||
-            (dut.key_tonic != 3'd1) ||
             (dut.semitone_pitch != 8'd86) ||
             (dut.display_note_name != 3'd1) ||
             (dut.display_accidental != 2'd1) ||
@@ -481,10 +480,9 @@ module tb_music_top;
         repeat (10) @(posedge clk);
         if ((dut.selected_song != 2'd2) ||
             (dut.song_length != 8'd204) ||
-            (dut.total_duration_16th != 16'd1044) ||
+            (dut.total_duration_units != 16'd1566) ||
             (dut.current_bpm != 8'd200) ||
             (dut.beats_per_bar != 3'd3) ||
-            (dut.key_tonic != 3'd6) ||
             (dut.semitone_pitch != 8'd75) ||
             (dut.display_note_name != 3'd1) ||
             (dut.display_accidental != 2'd2) ||
@@ -497,7 +495,7 @@ module tb_music_top;
 
         press_volume_up;
         repeat (10) @(posedge clk);
-        if ((dut.selected_song != 2'd0) || (dut.current_bpm != 8'd120)) begin
+        if ((dut.selected_song != 2'd0) || (dut.current_bpm != 8'd84)) begin
             $display("ERROR: song parameter increment did not wrap back to song 0");
             errors = errors + 1;
         end
@@ -511,12 +509,12 @@ module tb_music_top;
         press_volume_up;
         repeat (10) @(posedge clk);
         if ((dut.transpose_semitones != 6'sd1) ||
-            (dut.semitone_pitch != 8'd61) ||
-            (dut.display_note_name != 3'd1) ||
+            (dut.semitone_pitch != 8'd80) ||
+            (dut.display_note_name != 3'd5) ||
             (dut.display_accidental != 2'd0) ||
-            (dut.led_row0 != 8'b0000_0010) ||
+            (dut.led_row0 != 8'b0010_0000) ||
             (dut.led_row2[1:0] != 2'b01)) begin
-            $display("ERROR: transpose increment did not produce Db4");
+            $display("ERROR: transpose increment did not produce Ab5");
             errors = errors + 1;
         end
 
@@ -527,8 +525,8 @@ module tb_music_top;
 
         press_volume_down;
         repeat (10) @(posedge clk);
-        if ((dut.transpose_semitones != 6'sd0) || (dut.semitone_pitch != 8'd60)) begin
-            $display("ERROR: transpose decrement did not return to C4");
+        if ((dut.transpose_semitones != 6'sd0) || (dut.semitone_pitch != 8'd79)) begin
+            $display("ERROR: transpose decrement did not return to G5");
             errors = errors + 1;
         end
 
@@ -540,20 +538,20 @@ module tb_music_top;
 
         press_volume_up;
         repeat (10) @(posedge clk);
-        if (dut.current_bpm != 8'd121) begin
-            $display("ERROR: BPM increment did not reach 121");
+        if (dut.current_bpm != 8'd85) begin
+            $display("ERROR: BPM increment did not reach 85");
             errors = errors + 1;
         end
 
-        if (dut.sevenseg_glyphs[39:20] != {5'd14, 5'd1, 5'd2, 5'd1}) begin
-            $display("ERROR: seven-segment formatter did not show b121");
+        if (dut.sevenseg_glyphs[39:20] != {5'd14, 5'd0, 5'd8, 5'd5}) begin
+            $display("ERROR: seven-segment formatter did not show b085");
             errors = errors + 1;
         end
 
         press_volume_down;
         repeat (10) @(posedge clk);
-        if (dut.current_bpm != 8'd120) begin
-            $display("ERROR: BPM decrement did not return to 120");
+        if (dut.current_bpm != 8'd84) begin
+            $display("ERROR: BPM decrement did not return to 84");
             errors = errors + 1;
         end
 

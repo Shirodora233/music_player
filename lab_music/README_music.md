@@ -50,7 +50,7 @@ the board photo. `led_panel_controller` drives the musical display and
 | Row 0 | Current note name: C, D, E, F, G, A, B on the first seven LEDs |
 | Row 1 | Octave: octave 0 is all off, octaves 1 through 8 light one LED |
 | Row 2 | Flat flag, sharp flag, and right-aligned beat-in-bar indicator |
-| Row 3 | Playback progress bar based on elapsed sixteenth-note units |
+| Row 3 | Playback progress bar based on elapsed rhythm units |
 
 The seven-segment display is formatted by `sevenseg_ui_formatter` and scanned by
 `sevenseg_scan_controller`. The formatter treats logical digit 7 as the
@@ -63,7 +63,7 @@ physical two-digit module has its own A/B/C/D/E/F/G/DP segment bundle in
 
 | Digits | Display |
 | --- | --- |
-| Left four | Current selected parameter: `S001`, `t+00`, `t-12`, `b120`, `U007`, `P-St`, `P-1L`, or `P-AL` |
+| Left four | Current selected parameter: `S001`, `t+00`, `t-12`, `b084`, `U007`, `P-St`, `P-1L`, or `P-AL` |
 | Right four | KEY2-selected playback display; these four digits blink while paused |
 
 KEY2 cycles the right four digits through elapsed time `MM.SS`, remaining time
@@ -94,7 +94,7 @@ song display mode.
 
 ## Built-in songs
 
-- Song 0: Twinkle Twinkle Little Star
+- Song 0: Jiaojie Smile MIDI melody
 - Song 1: Old Memory MIDI melody
 - Song 2: Haruhikage MIDI melody
 
@@ -108,20 +108,21 @@ song display mode.
 | `[14:12]` | `note_name` | C, D, E, F, G, A, B |
 | `[11:10]` | `accidental` | flat, natural, sharp |
 | `[9:6]` | `octave` | octave 0 through 8 |
-| `[5:0]` | `duration_16th` | duration in sixteenth-note units |
+| `[5:0]` | `duration_units` | duration in rhythm units; one unit is one sixth of a quarter note |
 
-The ROM also emits per-song metadata: note count, total duration in
-sixteenth-note units, default BPM, tonic, accidental, mode, beats per bar, and
-the first beat offset. The current playback path sends this richer note word
-through `pitch_processor`, which computes both the sounding semitone pitch and
-the display spelling. The transpose parameter is controlled by `ui_controller`.
+The ROM also emits per-song metadata: note count, total duration in rhythm
+units, default BPM, beats per bar, and the first beat offset. The current
+playback path sends this richer note word through `pitch_processor`, which
+computes both the sounding semitone pitch and the display spelling. The
+transpose parameter is controlled by `ui_controller`.
 
-Playback timing uses each song's default BPM and the note `duration_16th` field.
-`beat_controller` emits one pulse per sixteenth note, one pulse per quarter-note
-beat, and a note-done pulse at the end of the encoded duration. `music_top`
-counts elapsed sixteenth-note units and elapsed seconds while playback is
-running; those counters feed the LED progress bar and seven-segment time
-display.
+Playback timing uses each song's default BPM and the note `duration_units`
+field. `beat_controller` emits one pulse per rhythm unit, one pulse per
+quarter-note beat, and a note-done pulse at the end of the encoded duration.
+There are six rhythm units per quarter note, which represents triplet figures
+used by the first song exactly. `music_top` counts elapsed rhythm units and
+elapsed seconds while playback is running; those counters feed the LED progress
+bar and seven-segment time display.
 
 ## Score conversion tool
 
@@ -142,13 +143,14 @@ Text score format:
 # title: Example
 # bpm: 120
 # time: 4/4
-# key: C major
-C4:4 D4:4 E4:4 R:4 F#4:8 Bb4:8
+C4:6 D4:6 E4:6 R:6 F#4:12 Bb4:12
 ```
 
-Durations are encoded in sixteenth-note units. Accidentals are kept in the note
-spelling, so `C#4:4` and `Db4:4` can display differently even though they sound
-at the same semitone.
+Durations are encoded in rhythm units. Accidentals are kept in the note spelling,
+so `C#4:4` and `Db4:4` can display differently even though they sound at the
+same semitone. MIDI key-signature events are used only while converting pitches
+to note spellings; the generated ROM does not store a single song-level key
+signature.
 
 The pin assignments are stored in `lab_music.srcs/constrs_1/new/music.xdc`.
 They are based on `xc7k325t-V2.1-out.pdf` and the supplied board photo. The

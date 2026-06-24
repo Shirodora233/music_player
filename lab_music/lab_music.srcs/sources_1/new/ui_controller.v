@@ -52,7 +52,7 @@ module ui_controller #(
             playback_mode       <= PLAY_MODE_STOP;
             edit_mode           <= EDIT_SONG;
             inactivity_count    <= 32'd0;
-            load_default_bpm_pending <= 1'b0;
+            load_default_bpm_pending <= 1'b1;
             song_changed        <= 1'b0;
             auto_song_changed   <= 1'b0;
         end else begin

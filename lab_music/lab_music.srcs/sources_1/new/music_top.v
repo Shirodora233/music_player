@@ -47,7 +47,7 @@ module music_top #(
     wire [7:0] note_index;
     wire [15:0] note_word;
     wire note_is_rest;
-    wire [5:0] duration_16th;
+    wire [5:0] duration_units;
     wire signed [5:0] transpose_semitones;
     wire [7:0] current_bpm;
     wire [7:0] semitone_pitch;
@@ -55,17 +55,14 @@ module music_top #(
     wire [1:0] display_accidental;
     wire [3:0] display_octave;
     wire [7:0] song_length;
-    wire [15:0] total_duration_16th;
+    wire [15:0] total_duration_units;
     wire [7:0] default_bpm;
-    wire [2:0] key_tonic;
-    wire [1:0] key_accidental;
-    wire key_mode;
     wire [2:0] beats_per_bar;
     wire [1:0] first_beat_in_bar;
     wire [2:0] safe_beats_per_bar;
     wire [1:0] safe_first_beat_in_bar;
     wire note_done;
-    wire sixteenth_pulse;
+    wire unit_pulse;
     wire beat_pulse;
     wire tone_enable;
     wire song_wrap;
@@ -101,7 +98,7 @@ module music_top #(
     wire [15:0] total_duration_seconds;
     wire [15:0] remaining_seconds;
     wire [2:0] current_beat_number;
-    reg [15:0] elapsed_16th_units;
+    reg [15:0] elapsed_units;
     reg [15:0] elapsed_seconds;
     reg [31:0] second_tick_count;
     reg [1:0] beat_in_bar;
@@ -123,7 +120,7 @@ module music_top #(
         first_beat_in_bar : 2'd0;
     assign safe_bpm = (current_bpm == 0) ? 8'd120 : current_bpm;
     assign total_seconds_numerator =
-        ({16'd0, total_duration_16th} * 32'd15) + {24'd0, safe_bpm} - 32'd1;
+        ({16'd0, total_duration_units} * 32'd10) + {24'd0, safe_bpm} - 32'd1;
     assign total_duration_seconds = total_seconds_numerator / safe_bpm;
     assign remaining_seconds =
         (total_duration_seconds > elapsed_seconds) ?
@@ -295,16 +292,13 @@ module music_top #(
         .note_index(note_index),
         .note_word(note_word),
         .song_length(song_length),
-        .total_duration_16th(total_duration_16th),
+        .total_duration_units(total_duration_units),
         .default_bpm(default_bpm),
-        .key_tonic(key_tonic),
-        .key_accidental(key_accidental),
-        .key_mode(key_mode),
         .beats_per_bar(beats_per_bar),
         .first_beat_in_bar(first_beat_in_bar)
     );
 
-    assign duration_16th = note_word[5:0];
+    assign duration_units = note_word[5:0];
     assign song_wrap = note_done &&
                        ((song_length == 0) || (note_index >= song_length - 1'b1));
     assign auto_next_song = song_wrap && (playback_mode == 2'd2);
@@ -330,29 +324,29 @@ module music_top #(
         .enable(playing),
         .clear(playback_timing_clear),
         .bpm(current_bpm),
-        .duration_16th(duration_16th),
+        .duration_units(duration_units),
         .note_done(note_done),
         .tone_enable(tone_enable),
-        .sixteenth_pulse(sixteenth_pulse),
+        .unit_pulse(unit_pulse),
         .beat_pulse(beat_pulse)
     );
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            elapsed_16th_units <= 16'd0;
+            elapsed_units      <= 16'd0;
             elapsed_seconds    <= 16'd0;
             second_tick_count  <= 32'd0;
             beat_in_bar        <= 2'd0;
             current_bar_number <= 10'd1;
         end else if (playback_timing_clear) begin
-            elapsed_16th_units <= 16'd0;
+            elapsed_units      <= 16'd0;
             elapsed_seconds    <= 16'd0;
             second_tick_count  <= 32'd0;
             beat_in_bar        <= safe_first_beat_in_bar;
             current_bar_number <= 10'd1;
         end else if (playing) begin
-            if (sixteenth_pulse && (elapsed_16th_units < total_duration_16th))
-                elapsed_16th_units <= elapsed_16th_units + 1'b1;
+            if (unit_pulse && (elapsed_units < total_duration_units))
+                elapsed_units <= elapsed_units + 1'b1;
 
             if (beat_pulse) begin
                 if ({1'b0, beat_in_bar} >= (safe_beats_per_bar - 1'b1)) begin
@@ -416,8 +410,8 @@ module music_top #(
         .display_octave(display_octave),
         .beats_per_bar(safe_beats_per_bar),
         .beat_in_bar(beat_in_bar),
-        .elapsed_16th_units(elapsed_16th_units),
-        .total_duration_16th(total_duration_16th),
+        .elapsed_units(elapsed_units),
+        .total_duration_units(total_duration_units),
         .row0(led_row0),
         .row1(led_row1),
         .row2(led_row2),
