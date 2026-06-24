@@ -35,6 +35,13 @@ module tb_music_top;
     reg repeat_key_pressed;
     wire repeat_key_pulse;
     integer repeat_pulses;
+    reg signed [5:0] pp_transpose;
+    reg [15:0] pp_note_word;
+    wire [7:0] pp_semitone_pitch;
+    wire [2:0] pp_display_note_name;
+    wire [1:0] pp_display_accidental;
+    wire [3:0] pp_display_octave;
+    wire pp_is_rest;
 
     music_top #(
         .CLK_FREQ_HZ(10_000),
@@ -98,6 +105,16 @@ module tb_music_top;
         .key_state(repeat_key_state),
         .key_pressed(repeat_key_pressed),
         .repeat_pressed(repeat_key_pulse)
+    );
+
+    pitch_processor u_pitch_edge_check (
+        .transpose_semitones(pp_transpose),
+        .note_word(pp_note_word),
+        .semitone_pitch(pp_semitone_pitch),
+        .display_note_name(pp_display_note_name),
+        .display_accidental(pp_display_accidental),
+        .display_octave(pp_display_octave),
+        .is_rest(pp_is_rest)
     );
 
     always #5000 clk = ~clk;
@@ -213,6 +230,18 @@ module tb_music_top;
         end
     endtask
 
+    task pulse_dut_note_done;
+        begin
+            @(negedge clk);
+            force dut.note_done = 1'b1;
+            @(posedge clk);
+            #1;
+            release dut.note_done;
+            @(posedge clk);
+            #1;
+        end
+    endtask
+
     task wait_for_scan_digit;
         input [2:0] logical_digit;
         begin
@@ -255,6 +284,8 @@ module tb_music_top;
         pm_playback_mode = 2'd0;
         repeat_key_state = 1'b0;
         repeat_key_pressed = 1'b0;
+        pp_transpose = 6'sd0;
+        pp_note_word = {1'b1, 3'd0, 2'd1, 4'd0, 6'd6};
         repeat_pulses = 0;
         errors         = 0;
         beep_edges     = 0;
@@ -311,6 +342,17 @@ module tb_music_top;
             (dut.display_accidental != 2'd1) ||
             (dut.display_octave != 4'd5)) begin
             $display("ERROR: initial pitch did not decode as natural G5");
+            errors = errors + 1;
+        end
+
+        pp_note_word = {1'b0, 3'd0, 2'd2, 4'd4, 6'd6}; // C#4
+        pp_transpose = 6'sd6;
+        #1;
+        if ((pp_semitone_pitch != 8'd67) ||
+            (pp_display_note_name != 3'd4) ||
+            (pp_display_accidental != 2'd1) ||
+            (pp_display_octave != 4'd4)) begin
+            $display("ERROR: C#4 plus six semitones did not display as natural G4");
             errors = errors + 1;
         end
 
@@ -602,6 +644,28 @@ module tb_music_top;
         if ((dut.playback_mode != 2'd2) ||
             (dut.sevenseg_glyphs[39:20] != {5'd17, 5'd11, 5'd18, 5'd19})) begin
             $display("ERROR: playback mode increment did not show P-AL");
+            errors = errors + 1;
+        end
+
+        press_play_pause;
+        if (!dut.playing || (dut.selected_song != 2'd0)) begin
+            $display("ERROR: all-song loop test did not start from S001");
+            errors = errors + 1;
+        end
+
+        repeat (203) pulse_dut_note_done;
+        if ((dut.selected_song != 2'd1) ||
+            !dut.playing ||
+            (dut.note_index != 8'd0) ||
+            (dut.song_length != 8'd189) ||
+            (dut.current_bpm != 8'd85)) begin
+            $display("ERROR: all-song loop did not auto-advance from S001 to S002");
+            errors = errors + 1;
+        end
+
+        press_stop;
+        if (!dut.stopped || (dut.note_index != 8'd0)) begin
+            $display("ERROR: stop after all-song loop did not reset playback");
             errors = errors + 1;
         end
 

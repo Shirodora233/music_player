@@ -91,6 +91,78 @@ module pitch_processor (
         end
     endfunction
 
+    function [2:0] chromatic_note_name;
+        input integer midi_pitch;
+        input prefer_flats;
+        integer pitch_class;
+        begin
+            pitch_class = midi_pitch % 12;
+            if (prefer_flats) begin
+                case (pitch_class)
+                    0:  chromatic_note_name = N_C;
+                    1:  chromatic_note_name = N_D;
+                    2:  chromatic_note_name = N_D;
+                    3:  chromatic_note_name = N_E;
+                    4:  chromatic_note_name = N_E;
+                    5:  chromatic_note_name = N_F;
+                    6:  chromatic_note_name = N_G;
+                    7:  chromatic_note_name = N_G;
+                    8:  chromatic_note_name = N_A;
+                    9:  chromatic_note_name = N_A;
+                    10: chromatic_note_name = N_B;
+                    11: chromatic_note_name = N_B;
+                    default: chromatic_note_name = N_C;
+                endcase
+            end else begin
+                case (pitch_class)
+                    0:  chromatic_note_name = N_C;
+                    1:  chromatic_note_name = N_C;
+                    2:  chromatic_note_name = N_D;
+                    3:  chromatic_note_name = N_D;
+                    4:  chromatic_note_name = N_E;
+                    5:  chromatic_note_name = N_F;
+                    6:  chromatic_note_name = N_F;
+                    7:  chromatic_note_name = N_G;
+                    8:  chromatic_note_name = N_G;
+                    9:  chromatic_note_name = N_A;
+                    10: chromatic_note_name = N_A;
+                    11: chromatic_note_name = N_B;
+                    default: chromatic_note_name = N_C;
+                endcase
+            end
+        end
+    endfunction
+
+    function [1:0] chromatic_accidental;
+        input integer midi_pitch;
+        input prefer_flats;
+        integer pitch_class;
+        begin
+            pitch_class = midi_pitch % 12;
+            if ((pitch_class == 1) || (pitch_class == 3) ||
+                (pitch_class == 6) || (pitch_class == 8) ||
+                (pitch_class == 10)) begin
+                chromatic_accidental = prefer_flats ? ACC_FLAT : ACC_SHARP;
+            end else begin
+                chromatic_accidental = ACC_NATURAL;
+            end
+        end
+    endfunction
+
+    function integer midi_display_octave;
+        input integer midi_pitch;
+        integer octave;
+        begin
+            octave = (midi_pitch / 12) - 1;
+            if (octave < 0)
+                midi_display_octave = 0;
+            else if (octave > 8)
+                midi_display_octave = 8;
+            else
+                midi_display_octave = octave;
+        end
+    endfunction
+
     always @(*) begin
         semitone_pitch      = 8'd0;
         display_note_name   = N_C;
@@ -129,12 +201,22 @@ module pitch_processor (
             display_note_name = target_note_name_int[2:0];
             display_octave = target_octave_int[3:0];
 
-            if (target_accidental_offset < 0)
+            if ((target_accidental_offset < -1) ||
+                (target_accidental_offset > 1)) begin
+                display_note_name =
+                    chromatic_note_name(target_midi,
+                                        target_accidental_offset < 0);
+                display_accidental =
+                    chromatic_accidental(target_midi,
+                                         target_accidental_offset < 0);
+                display_octave = midi_display_octave(target_midi);
+            end else if (target_accidental_offset < 0) begin
                 display_accidental = ACC_FLAT;
-            else if (target_accidental_offset > 0)
+            end else if (target_accidental_offset > 0) begin
                 display_accidental = ACC_SHARP;
-            else
+            end else begin
                 display_accidental = ACC_NATURAL;
+            end
         end
     end
 
