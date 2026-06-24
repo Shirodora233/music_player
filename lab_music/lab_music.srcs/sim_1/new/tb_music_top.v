@@ -36,7 +36,7 @@ module tb_music_top;
     wire repeat_key_pulse;
     integer repeat_pulses;
     reg signed [5:0] pp_transpose;
-    reg [15:0] pp_note_word;
+    reg [16:0] pp_note_word;
     wire [7:0] pp_semitone_pitch;
     wire [2:0] pp_display_note_name;
     wire [1:0] pp_display_accidental;
@@ -285,7 +285,7 @@ module tb_music_top;
         repeat_key_state = 1'b0;
         repeat_key_pressed = 1'b0;
         pp_transpose = 6'sd0;
-        pp_note_word = {1'b1, 3'd0, 2'd1, 4'd0, 6'd6};
+        pp_note_word = {1'b1, 3'd0, 2'd1, 4'd0, 7'd12};
         repeat_pulses = 0;
         errors         = 0;
         beep_edges     = 0;
@@ -345,7 +345,7 @@ module tb_music_top;
             errors = errors + 1;
         end
 
-        pp_note_word = {1'b0, 3'd0, 2'd2, 4'd4, 6'd6}; // C#4
+        pp_note_word = {1'b0, 3'd0, 2'd2, 4'd4, 7'd12}; // C#4
         pp_transpose = 6'sd6;
         #1;
         if ((pp_semitone_pitch != 8'd67) ||
@@ -501,7 +501,7 @@ module tb_music_top;
             !dut.stopped ||
             (dut.note_index != 0) ||
             (dut.song_length != 8'd189) ||
-            (dut.total_duration_units != 16'd912) ||
+            (dut.total_duration_units != 16'd1824) ||
             (dut.current_bpm != 8'd85) ||
             (dut.semitone_pitch != 8'd86) ||
             (dut.display_note_name != 3'd1) ||
@@ -522,7 +522,7 @@ module tb_music_top;
         repeat (10) @(posedge clk);
         if ((dut.selected_song != 2'd2) ||
             (dut.song_length != 8'd204) ||
-            (dut.total_duration_units != 16'd1566) ||
+            (dut.total_duration_units != 16'd3132) ||
             (dut.current_bpm != 8'd200) ||
             (dut.beats_per_bar != 3'd3) ||
             (dut.semitone_pitch != 8'd75) ||

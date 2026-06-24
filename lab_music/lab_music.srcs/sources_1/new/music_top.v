@@ -45,9 +45,9 @@ module music_top #(
     wire [1:0] selected_song;
     wire song_changed;
     wire [7:0] note_index;
-    wire [15:0] note_word;
+    wire [16:0] note_word;
     wire note_is_rest;
-    wire [5:0] duration_units;
+    wire [6:0] duration_units;
     wire signed [5:0] transpose_semitones;
     wire [7:0] current_bpm;
     wire [7:0] semitone_pitch;
@@ -120,7 +120,7 @@ module music_top #(
         first_beat_in_bar : 2'd0;
     assign safe_bpm = (current_bpm == 0) ? 8'd120 : current_bpm;
     assign total_seconds_numerator =
-        ({16'd0, total_duration_units} * 32'd10) + {24'd0, safe_bpm} - 32'd1;
+        ({16'd0, total_duration_units} * 32'd5) + {24'd0, safe_bpm} - 32'd1;
     assign total_duration_seconds = total_seconds_numerator / safe_bpm;
     assign remaining_seconds =
         (total_duration_seconds > elapsed_seconds) ?
@@ -298,7 +298,7 @@ module music_top #(
         .first_beat_in_bar(first_beat_in_bar)
     );
 
-    assign duration_units = note_word[5:0];
+    assign duration_units = note_word[6:0];
     assign song_wrap = note_done &&
                        ((song_length == 0) || (note_index >= song_length - 1'b1));
     assign auto_next_song = song_wrap && (playback_mode == 2'd2);

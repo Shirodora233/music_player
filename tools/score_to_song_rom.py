@@ -13,7 +13,7 @@ from typing import List, Optional, Sequence, Tuple
 
 
 ACCIDENTAL = {"b": "ACC_FLAT", "": "ACC_NATURAL", "#": "ACC_SHARP"}
-UNITS_PER_QUARTER = 6
+UNITS_PER_QUARTER = 12
 
 SHARP_SPELLING = [
     ("C", ""), ("C", "#"), ("D", ""), ("D", "#"),
@@ -221,7 +221,7 @@ def key_at_tick(tick: int, key_events: Sequence[KeyEvent]) -> KeyEvent:
 def append_duration(notes: List[SongNote], note: SongNote) -> None:
     remaining = note.duration
     while remaining > 0:
-        chunk = min(63, remaining)
+        chunk = min(127, remaining)
         notes.append(dataclasses.replace(note, duration=chunk))
         remaining -= chunk
 
@@ -283,13 +283,13 @@ def parse_text_score(path: pathlib.Path) -> Song:
 
 
 def note_expr(note: SongNote) -> str:
-    if note.duration < 1 or note.duration > 63:
-        raise ValueError(f"duration out of 6-bit range after splitting: {note.duration}")
+    if note.duration < 1 or note.duration > 127:
+        raise ValueError(f"duration out of 7-bit range after splitting: {note.duration}")
     if note.rest:
-        return f"rest(6'd{note.duration})"
+        return f"rest(7'd{note.duration})"
     return (
         f"note(N_{note.name}, {ACCIDENTAL[note.accidental]}, "
-        f"4'd{note.octave}, 6'd{note.duration})"
+        f"4'd{note.octave}, 7'd{note.duration})"
     )
 
 

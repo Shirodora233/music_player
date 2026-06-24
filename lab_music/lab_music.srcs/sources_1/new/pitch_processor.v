@@ -2,7 +2,7 @@
 
 module pitch_processor (
     input  wire signed [5:0] transpose_semitones,
-    input  wire [15:0]       note_word,
+    input  wire [16:0]       note_word,
     output reg  [7:0]        semitone_pitch,
     output reg  [2:0]        display_note_name,
     output reg  [1:0]        display_accidental,
@@ -22,9 +22,9 @@ module pitch_processor (
     localparam [1:0] ACC_NATURAL = 2'd1;
     localparam [1:0] ACC_SHARP   = 2'd2;
 
-    wire [2:0] source_note_name = note_word[14:12];
-    wire [1:0] source_accidental = note_word[11:10];
-    wire [3:0] source_octave = note_word[9:6];
+    wire [2:0] source_note_name = note_word[15:13];
+    wire [1:0] source_accidental = note_word[12:11];
+    wire [3:0] source_octave = note_word[10:7];
 
     integer source_midi;
     integer target_midi;
@@ -35,7 +35,7 @@ module pitch_processor (
     integer target_natural_midi;
     integer target_accidental_offset;
 
-    assign is_rest = note_word[15];
+    assign is_rest = note_word[16];
 
     function integer natural_pc;
         input [2:0] note_name;

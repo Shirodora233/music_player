@@ -100,15 +100,15 @@ song display mode.
 
 ## Song encoding
 
-`song_rom` stores each note as a 16-bit word:
+`song_rom` stores each note as a 17-bit word:
 
 | Bits | Field | Description |
 | --- | --- | --- |
-| `[15]` | `rest` | 1 for a rest, 0 for a pitched note |
-| `[14:12]` | `note_name` | C, D, E, F, G, A, B |
-| `[11:10]` | `accidental` | flat, natural, sharp |
-| `[9:6]` | `octave` | octave 0 through 8 |
-| `[5:0]` | `duration_units` | duration in rhythm units; one unit is one sixth of a quarter note |
+| `[16]` | `rest` | 1 for a rest, 0 for a pitched note |
+| `[15:13]` | `note_name` | C, D, E, F, G, A, B |
+| `[12:11]` | `accidental` | flat, natural, sharp |
+| `[10:7]` | `octave` | octave 0 through 8 |
+| `[6:0]` | `duration_units` | duration in rhythm units; one unit is one twelfth of a quarter note |
 
 The ROM also emits per-song metadata: note count, total duration in rhythm
 units, default BPM, beats per bar, and the first beat offset. The current
@@ -119,8 +119,8 @@ transpose parameter is controlled by `ui_controller`.
 Playback timing uses each song's default BPM and the note `duration_units`
 field. `beat_controller` emits one pulse per rhythm unit, one pulse per
 quarter-note beat, and a note-done pulse at the end of the encoded duration.
-There are six rhythm units per quarter note, which represents triplet figures
-used by the first song exactly. `music_top` counts elapsed rhythm units and
+There are twelve rhythm units per quarter note, which represents both sixteenth
+notes and triplet figures exactly. `music_top` counts elapsed rhythm units and
 elapsed seconds while playback is running; those counters feed the LED progress
 bar and seven-segment time display.
 
@@ -143,7 +143,7 @@ Text score format:
 # title: Example
 # bpm: 120
 # time: 4/4
-C4:6 D4:6 E4:6 R:6 F#4:12 Bb4:12
+C4:12 D4:12 E4:12 R:12 F#4:24 Bb4:24
 ```
 
 Durations are encoded in rhythm units. Accidentals are kept in the note spelling,
